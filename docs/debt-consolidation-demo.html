@@ -109,12 +109,6 @@
         <div class="mt-6 max-w-sm w-full bg-white/90 backdrop-blur rounded-xl p-4 shadow-lg">
             <h2 id="demoTitle" class="font-bold text-teal-800 mb-3 text-sm">🧪 Configuración</h2>
             <div class="space-y-3">
-                <!-- Backend Info -->
-                <div class="pb-3 border-b border-gray-200">
-                    <label class="text-xs text-gray-500 block mb-1">Backend</label>
-                    <p class="text-xs text-gray-600">API keys handled securely by backend server</p>
-                </div>
-
                 <div>
                     <label id="customerLabel" class="text-xs text-gray-500 block mb-1">Nombre del Cliente</label>
                     <input
@@ -365,8 +359,8 @@ Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándo
         elements.currentRateInput.value = customerProfile.currentRate;
         elements.currentTermInput.value = customerProfile.currentTerm;
 
-        // Start conversation automatically on load
-        startConversation();
+        // Check authentication
+        checkAuthentication();
 
         // Format message text with simple markdown support
         function formatMessage(text) {
@@ -586,7 +580,38 @@ Ready to get started? I just need you to share screenshots of 3 loans you have w
             renderMessages();
         }
 
+        // Authentication functions
+        function checkAuthentication() {
+            const stored = sessionStorage.getItem('demo_authenticated');
+            if (stored === 'true') {
+                isAuthenticated = true;
+                document.getElementById('passwordModal').classList.add('hidden');
+                startConversation();
+            } else {
+                document.getElementById('passwordModal').classList.remove('hidden');
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('usernameInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+            const errorDiv = document.getElementById('loginError');
+
+            if (username === DEMO_CREDENTIALS.username && password === DEMO_CREDENTIALS.password) {
+                isAuthenticated = true;
+                sessionStorage.setItem('demo_authenticated', 'true');
+                document.getElementById('passwordModal').classList.add('hidden');
+                startConversation();
+            } else {
+                errorDiv.textContent = 'Invalid username or password';
+                errorDiv.classList.remove('hidden');
+                document.getElementById('passwordInput').value = '';
+            }
+        }
+
         // Event listeners
+        document.getElementById('loginForm').addEventListener('submit', handleLogin);
 
         elements.messageForm.addEventListener('submit', (e) => {
             e.preventDefault();
