@@ -25,6 +25,47 @@
 </head>
 <body>
     <div id="app" class="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex flex-col items-center justify-center p-4">
+        <!-- Password Protection Modal -->
+        <div id="passwordModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 flex items-center justify-center mx-auto mb-4">
+                        <span class="text-3xl">🌿</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Tala Demo</h2>
+                    <p class="text-sm text-gray-600">Enter your credentials to access</p>
+                </div>
+                <form id="loginForm" class="space-y-4">
+                    <div>
+                        <label class="text-xs text-gray-500 block mb-1">Username</label>
+                        <input
+                            type="text"
+                            id="usernameInput"
+                            placeholder="Enter username"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            autocomplete="username"
+                        />
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 block mb-1">Password</label>
+                        <input
+                            type="password"
+                            id="passwordInput"
+                            placeholder="Enter password"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            autocomplete="current-password"
+                        />
+                    </div>
+                    <div id="loginError" class="text-red-500 text-xs text-center hidden"></div>
+                    <button
+                        type="submit"
+                        class="w-full px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg font-semibold transition-colors"
+                    >
+                        Access Demo
+                    </button>
+                </form>
+            </div>
+        </div>
 
         <!-- Phone Frame -->
         <div class="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden border-8 border-gray-800 relative">
@@ -136,7 +177,7 @@
                         />
                     </div>
                     <div>
-                        <label id="termLabel" class="text-xs text-gray-500 block mb-1">Plazo (semanas)</label>
+                        <label id="termLabel" class="text-xs text-gray-500 block mb-1">Plazo (meses)</label>
                         <input
                             type="number"
                             id="currentTermInput"
@@ -165,7 +206,7 @@
                 customer: 'Customer Name',
                 currentLimit: 'Tala Limit (MXN)',
                 currentRate: 'Rate (%/week)',
-                currentTerm: 'Term (weeks)',
+                currentTerm: 'Term (months)',
                 langToggle: 'ES',
                 applyRestart: 'Apply & Restart',
                 changeKey: 'Change'
@@ -179,7 +220,7 @@
                 customer: 'Nombre del Cliente',
                 currentLimit: 'Límite Tala (MXN)',
                 currentRate: 'Tasa (%/semana)',
-                currentTerm: 'Plazo (semanas)',
+                currentTerm: 'Plazo (meses)',
                 langToggle: 'EN',
                 applyRestart: 'Aplicar y Reiniciar',
                 changeKey: 'Cambiar'
@@ -191,7 +232,7 @@
             customerName: 'María',
             currentLimit: 3000,
             currentRate: 4.5,
-            currentTerm: 4
+            currentTerm: 1
         };
 
         // Configuration - Update with your Railway backend URL
@@ -211,8 +252,8 @@
         function buildSystemPrompt() {
             const lang = language === 'es' ? 'ES' : 'EN';
             const customerInfo = language === 'es'
-                ? `Nombre: ${customerProfile.customerName}, Límite actual en Tala: $${customerProfile.currentLimit.toLocaleString()} MXN, Tasa Tala: ${customerProfile.currentRate}%/semana, Plazo: ${customerProfile.currentTerm} semanas`
-                : `Name: ${customerProfile.customerName}, Current Tala limit: $${customerProfile.currentLimit.toLocaleString()} MXN, Tala rate: ${customerProfile.currentRate}%/week, Term: ${customerProfile.currentTerm} weeks`;
+                ? `Nombre: ${customerProfile.customerName}, Límite actual en Tala: $${customerProfile.currentLimit.toLocaleString()} MXN, Tasa Tala: ${customerProfile.currentRate}%/semana, Plazo: ${customerProfile.currentTerm} meses`
+                : `Name: ${customerProfile.customerName}, Current Tala limit: $${customerProfile.currentLimit.toLocaleString()} MXN, Tala rate: ${customerProfile.currentRate}%/week, Term: ${customerProfile.currentTerm} months`;
 
             const basePrompt = language === 'es' ? SYSTEM_PROMPT_ES : SYSTEM_PROMPT_EN;
             return `${basePrompt}\n\nCUSTOMER PROFILE:\n${customerInfo}\n\nIMPORTANT: Track the conversation flow naturally. When the customer shares loan screenshots, analyze them and extract: lender name, outstanding balance, and interest rate. After collecting 3+ loans, present the consolidation offer with calculations.`;
