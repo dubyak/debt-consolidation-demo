@@ -431,6 +431,8 @@ Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándo
             elements.apiKeyModal.classList.remove('hidden');
         } else {
             updateApiKeyDisplay();
+            // Start conversation automatically if API key exists
+            startConversation();
         }
 
         // Update UI text based on language
@@ -710,9 +712,7 @@ Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándo
 
         // Initialize
         updateUIText();
-        if (getApiKey()) {
-            startConversation();
-        }
+        // Conversation will start automatically if API key exists (handled above)
     </script>
 </body>
 </html>
