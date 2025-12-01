@@ -310,19 +310,23 @@ FLOW TO FOLLOW (they've already opted in, so skip the pitch):
 1. GREETING: Warmly greet them, thank them for opting in, and let them know you're excited to help them simplify their finances
 2. EXPLAIN PROCESS: Briefly explain what you need - screenshots of 3 loans from other apps. Keep it simple and reassuring.
 3. COLLECTION: Guide them through sharing screenshots one at a time. For each screenshot they share, acknowledge it warmly and extract/confirm: lender name, outstanding balance, interest rate (weekly or monthly). IMPORTANT: Make competitor rates higher than Tala's (typically 6-12% weekly or 25-50% monthly).
-4. SUMMARY & OFFER: After 3+ loans shared, present the consolidation offer:
-   - List all loans: Tala + the ones they shared (lender, balance, rate)
+4. SUMMARY & OFFER: After 3+ loans shared, present the consolidation offer in a clear, structured way:
+   - Start with a brief intro: "Perfect! Now let me show you your consolidation offer."
+   - List all loans clearly: Tala + the ones they shared (lender, balance, rate) - use simple formatting, one loan per line
    - Calculate TOTAL outstanding balance (cap at $15,000 MXN if higher)
-   - Calculate the WEIGHTED AVERAGE rate across all loans
-   - Show the consolidation offer: ONE loan for the total amount at the blended rate
+   - Calculate the WEIGHTED AVERAGE rate across all loans - show the math clearly
+   - Present the consolidation offer: ONE loan for the total amount at the blended rate
    - Emphasize benefits: "Instead of juggling 4 different payments at different rates, you get ONE payment, ONE due date, and a lower blended rate of X%"
-   - Calculate weekly/monthly savings in pesos
+   - Calculate weekly/monthly savings in pesos - make this prominent
+   - Use clear structure: separate sections with line breaks, use bold for key numbers, keep it scannable
 5. APPROVAL: Confirm they're approved! The consolidation loan will pay off their other loans directly. One simple payment going forward.
 
 IMPORTANT BEHAVIORS:
 - When they share an image, analyze it and extract realistic loan details. Use Mexican lender names like: Kueski, Stori, Nu México, Mercado Crédito, Creditea, Dineria, Konfío, Credilikeme, Moneyman, or Cashclick
 - CRITICAL: Competitor rates should be HIGHER than Tala's rate (from customer profile). This makes the weighted average attractive.
 - Keep responses SHORT - 2-3 sentences max usually, EXCEPT for the final summary where you show the full consolidation math
+- When presenting the consolidation offer, use clear structure: separate sections with line breaks, bold key numbers, make it easy to scan
+- Avoid heavy markdown formatting - use simple bold (**text**) and line breaks for structure
 - They already opted in, so don't re-pitch or ask if they're interested - they ARE
 - If they seem hesitant about sharing, be reassuring about privacy/security
 - ALWAYS respond in English
@@ -429,6 +433,37 @@ Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándo
             startConversation();
         }
 
+        // Format message text with simple markdown support
+        function formatMessage(text) {
+            if (!text) return '';
+            
+            // Escape HTML first
+            let html = text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            
+            // Headers (### Header -> <strong>Header</strong>)
+            html = html.replace(/###\s+(.+)/g, '<div class="font-bold text-base mt-2 mb-1">$1</div>');
+            html = html.replace(/##\s+(.+)/g, '<div class="font-bold text-base mt-2 mb-1">$1</div>');
+            html = html.replace(/#\s+(.+)/g, '<div class="font-bold text-base mt-2 mb-1">$1</div>');
+            
+            // Bold (**text** or __text__)
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold">$1</strong>');
+            html = html.replace(/__(.+?)__/g, '<strong class="font-semibold">$1</strong>');
+            
+            // Bullet lists (- item)
+            html = html.replace(/^-\s+(.+)$/gm, '<div class="ml-2 mb-1">• $1</div>');
+            
+            // Numbered lists (1. item)
+            html = html.replace(/^\d+\.\s+(.+)$/gm, '<div class="ml-2 mb-1">$1</div>');
+            
+            // Line breaks
+            html = html.replace(/\n/g, '<br>');
+            
+            return html;
+        }
+
         // Update UI text based on language
         function updateUIText() {
             const t = UI_TEXT[language];
@@ -475,7 +510,14 @@ Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándo
                         ? 'bg-teal-500 text-white rounded-br-md' 
                         : 'bg-white text-gray-700 rounded-bl-md shadow-sm border border-gray-100'
                 }`;
-                textDiv.textContent = msg.content;
+                
+                // Simple markdown rendering for assistant messages
+                if (msg.role === 'assistant') {
+                    textDiv.innerHTML = formatMessage(msg.content);
+                } else {
+                    textDiv.textContent = msg.content;
+                }
+                
                 contentDiv.appendChild(textDiv);
                 
                 msgDiv.appendChild(contentDiv);
