@@ -501,17 +501,22 @@ Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándo
         }
 
         // Welcome messages
-        const WELCOME_MESSAGE_EN = `Hey ${customerProfile.customerName}! 👋 So glad you opted in for this opportunity. I'm Maya from Tala, and I'm here to help you consolidate all your loans into one.
-
-Over the next few minutes, we'll review your loans from other apps and I'll show you how you can simplify everything into one payment, with a lower rate and less stress.
-
-Ready to get started? I just need you to share screenshots of 3 loans you have with other apps.`;
-
-        const WELCOME_MESSAGE_ES = `¡Hola ${customerProfile.customerName}! 👋 Qué gusto que aceptaste esta oportunidad. Soy Maya de Tala, y estoy aquí para ayudarte a consolidar todos tus préstamos en uno solo.
+        function getWelcomeMessage() {
+            const name = customerProfile.customerName;
+            if (language === 'es') {
+                return `¡Hola ${name}! 👋 Qué gusto que aceptaste esta oportunidad. Soy Maya de Tala, y estoy aquí para ayudarte a consolidar todos tus préstamos en uno solo.
 
 En los próximos minutos, vamos a revisar tus préstamos de otras apps y te voy a mostrar cómo puedes simplificar todo en un solo pago, con una tasa más baja y menos estrés.
 
 ¿Lista para empezar? Solo necesito que compartas capturas de 3 préstamos que tengas con otras apps.`;
+            } else {
+                return `Hey ${name}! 👋 So glad you opted in for this opportunity. I'm Maya from Tala, and I'm here to help you consolidate all your loans into one.
+
+Over the next few minutes, we'll review your loans from other apps and I'll show you how you can simplify everything into one payment, with a lower rate and less stress.
+
+Ready to get started? I just need you to share screenshots of 3 loans you have with other apps.`;
+            }
+        }
 
         // Start conversation
         async function startConversation() {
@@ -525,9 +530,7 @@ En los próximos minutos, vamos a revisar tus préstamos de otras apps y te voy 
             renderMessages();
 
             // Use hardcoded welcome message
-            const welcomeMessage = language === 'es' 
-                ? WELCOME_MESSAGE_ES.replace('${customerProfile.customerName}', customerProfile.customerName)
-                : WELCOME_MESSAGE_EN.replace('${customerProfile.customerName}', customerProfile.customerName);
+            const welcomeMessage = getWelcomeMessage();
 
             messages = [{ role: 'assistant', content: welcomeMessage }];
             isLoading = false;
