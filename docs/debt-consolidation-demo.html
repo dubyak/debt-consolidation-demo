@@ -465,11 +465,12 @@ Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándo
                 
                 if (msg.image) {
                     const imgDiv = document.createElement('div');
-                    imgDiv.className = 'mb-1 rounded-xl overflow-hidden border-2 border-teal-200';
+                    imgDiv.className = 'mb-2 rounded-xl overflow-hidden border-2 border-teal-200 bg-gray-100';
                     const img = document.createElement('img');
                     img.src = msg.image;
-                    img.alt = 'Uploaded loan';
-                    img.className = 'w-full max-h-32 object-cover';
+                    img.alt = 'Uploaded loan screenshot';
+                    img.className = 'w-full max-w-xs object-contain';
+                    img.style.maxHeight = '400px';
                     imgDiv.appendChild(img);
                     contentDiv.appendChild(imgDiv);
                 }
