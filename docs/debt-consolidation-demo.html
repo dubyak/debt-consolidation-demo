@@ -562,41 +562,49 @@ Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándo
 
         // Format message text with simple markdown support
         function formatMessage(text) {
-            if (!text) return '';
-            
-            // Ensure text is a string
-            if (typeof text !== 'string') {
-                text = String(text);
+            try {
+                if (!text) return '';
+                
+                // Ensure text is a string
+                if (typeof text !== 'string') {
+                    text = String(text);
+                }
+                
+                // Replace separator lines BEFORE escaping HTML (they're Unicode, not HTML)
+                text = text.replace(/━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━/g, '___SEPARATOR___');
+                
+                // Escape HTML
+                let html = text
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+                
+                // Replace separator placeholder with CSS border div
+                html = html.replace(/___SEPARATOR___/g, '<div class="border-t border-gray-300 my-2 w-full"></div>');
+                
+                // Headers (### Header -> <strong>Header</strong>)
+                html = html.replace(/###\s+(.+)/g, '<div class="font-bold text-base mt-2 mb-1">$1</div>');
+                html = html.replace(/##\s+(.+)/g, '<div class="font-bold text-base mt-2 mb-1">$1</div>');
+                html = html.replace(/#\s+(.+)/g, '<div class="font-bold text-base mt-2 mb-1">$1</div>');
+                
+                // Bold (**text** or __text__)
+                html = html.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold">$1</strong>');
+                html = html.replace(/__(.+?)__/g, '<strong class="font-semibold">$1</strong>');
+                
+                // Bullet lists (- item)
+                html = html.replace(/^-\s+(.+)$/gm, '<div class="ml-2 mb-1">• $1</div>');
+                
+                // Numbered lists (1. item)
+                html = html.replace(/^\d+\.\s+(.+)$/gm, '<div class="ml-2 mb-1">$1</div>');
+                
+                // Line breaks
+                html = html.replace(/\n/g, '<br>');
+                
+                return html;
+            } catch (error) {
+                console.error('Error in formatMessage:', error);
+                return String(text || ''); // Return plain text if formatting fails
             }
-            
-            // Escape HTML first
-            let html = text
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
-            
-            // Headers (### Header -> <strong>Header</strong>)
-            html = html.replace(/###\s+(.+)/g, '<div class="font-bold text-base mt-2 mb-1">$1</div>');
-            html = html.replace(/##\s+(.+)/g, '<div class="font-bold text-base mt-2 mb-1">$1</div>');
-            html = html.replace(/#\s+(.+)/g, '<div class="font-bold text-base mt-2 mb-1">$1</div>');
-            
-            // Bold (**text** or __text__)
-            html = html.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold">$1</strong>');
-            html = html.replace(/__(.+?)__/g, '<strong class="font-semibold">$1</strong>');
-            
-            // Bullet lists (- item)
-            html = html.replace(/^-\s+(.+)$/gm, '<div class="ml-2 mb-1">• $1</div>');
-            
-            // Numbered lists (1. item)
-            html = html.replace(/^\d+\.\s+(.+)$/gm, '<div class="ml-2 mb-1">$1</div>');
-            
-            // Replace separator lines with CSS borders to prevent overflow (before line breaks)
-            html = html.replace(/━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━/g, '<div class="border-t border-gray-300 my-2 w-full"></div>');
-            
-            // Line breaks
-            html = html.replace(/\n/g, '<br>');
-            
-            return html;
         }
 
         // Update UI text based on language
