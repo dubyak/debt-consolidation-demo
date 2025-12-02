@@ -918,18 +918,7 @@ Great decision! Now you have more flexibility to cover any expenses that come up
         function showReviewScreen() {
             updateProgress(3, 4);
             
-            // Include Tala loan in review
-            const talaLoan = {
-                lender: 'Tala',
-                balance: customerProfile.currentLimit,
-                weeklyRate: customerProfile.currentRate,
-                monthlyPayment: customerProfile.currentLimit * (customerProfile.currentRate / 100) * 4.33
-            };
-            const allLoansForReview = [talaLoan, ...extractedLoans];
-            
-            const totalMonthlyPayment = calculateTotalMonthlyPayment(allLoansForReview);
-            const totalBalance = allLoansForReview.reduce((sum, loan) => sum + (parseFloat(loan.balance) || 0), 0);
-            
+            // Only show loans being consolidated (exclude Tala)
             const consolidationLoanCount = extractedLoans.length;
             const consolidationTotal = extractedLoans.reduce((sum, loan) => sum + (parseFloat(loan.balance) || 0), 0);
             const consolidationMonthlyPayment = calculateTotalMonthlyPayment(extractedLoans);
@@ -939,24 +928,24 @@ Great decision! Now you have more flexibility to cover any expenses that come up
 
 He recopilado la información de tus préstamos:
 
-${allLoansForReview.map((loan, idx) => `• **${loan.lender}**: $${parseFloat(loan.balance).toLocaleString()} MXN (${loan.weeklyRate}% semanal)`).join('\n')}
+${extractedLoans.map((loan, idx) => `• **${loan.lender}**: $${parseFloat(loan.balance).toLocaleString()} MXN (${loan.weeklyRate}% semanal)`).join('\n')}
 
 **Resumen:**
-• **Pago mensual total:** $${totalMonthlyPayment.toLocaleString()}/mes
-• **Deuda total:** $${totalBalance.toLocaleString()}
-• **Consolidarás ${consolidationLoanCount} ${consolidationLoanCount === 1 ? 'préstamo' : 'préstamos'} en 1** ($${consolidationTotal.toLocaleString()} MXN)
+• **Pago mensual total:** $${consolidationMonthlyPayment.toLocaleString()}/mes
+• **Deuda total:** $${consolidationTotal.toLocaleString()}
+• **Consolidarás ${consolidationLoanCount} ${consolidationLoanCount === 1 ? 'préstamo' : 'préstamos'} en 1**
 
 ¡Perfecto! Ahora puedo mostrarte tu oferta de consolidación con todos los detalles.`
                 : `**Review your loans**
 
 I've collected information about your loans:
 
-${allLoansForReview.map((loan, idx) => `• **${loan.lender}**: $${parseFloat(loan.balance).toLocaleString()} MXN (${loan.weeklyRate}% weekly)`).join('\n')}
+${extractedLoans.map((loan, idx) => `• **${loan.lender}**: $${parseFloat(loan.balance).toLocaleString()} MXN (${loan.weeklyRate}% weekly)`).join('\n')}
 
 **Summary:**
-• **Total monthly payment:** $${totalMonthlyPayment.toLocaleString()}/month
-• **Total debt:** $${totalBalance.toLocaleString()}
-• **You'll consolidate ${consolidationLoanCount} ${consolidationLoanCount === 1 ? 'loan' : 'loans'} into 1** ($${consolidationTotal.toLocaleString()} MXN)
+• **Total monthly payment:** $${consolidationMonthlyPayment.toLocaleString()}/month
+• **Total debt:** $${consolidationTotal.toLocaleString()}
+• **You'll consolidate ${consolidationLoanCount} ${consolidationLoanCount === 1 ? 'loan' : 'loans'} into 1**
 
 Perfect! Now I can show you your consolidation offer with all the details.`;
             
