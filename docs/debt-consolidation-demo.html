@@ -1015,48 +1015,36 @@ Puedo aumentar tu límite en un **20% adicional** ($${formatCurrency(additional2
 
 ### 💵 **YOUR NEW MONTHLY PAYMENT**
 
-**$${offer.newMonthlyPayment.toLocaleString()} MXN/month**
+**$${formatCurrency(offer.newMonthlyPayment)} MXN/month**
 
-**You were paying:** ~~$${offer.currentMonthlyPayment.toLocaleString()}/month~~
-**You'll now pay:** **$${offer.newMonthlyPayment.toLocaleString()}/month**
-**You save each month:** **$${offer.monthlySavings.toLocaleString()} MXN** 💰
+**You were paying:** ~~$${formatCurrency(offer.currentMonthlyPayment)}/month~~
+**You'll now pay:** **$${formatCurrency(offer.newMonthlyPayment)}/month**
+**You save each month:** **$${formatCurrency(offer.monthlySavings)} MXN** 💰
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${termMonths > 1 ? `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### 📊 **TOTAL COST COMPARISON**
+### 📊 **TOTAL SAVINGS OVER ${termMonths} MONTHS**
 
-**Total cost of your current loans:** ~~$${totalCostCurrent.toLocaleString()} MXN~~
-**Total cost of consolidated loan:** **$${totalCostNew.toLocaleString()} MXN**
-**Total savings:** **$${totalCostSavings.toLocaleString()} MXN** 🎉
-
-*Based on ${termMonths} ${termMonths === 1 ? 'month' : 'months'} term*
+**Total cost of your current loans:** ~~$${formatCurrency(totalCostCurrent)} MXN~~
+**Total cost of consolidated loan:** **$${formatCurrency(totalCostNew)} MXN**
+**Total savings:** **$${formatCurrency(totalCostSavings)} MXN** 🎉` : ''}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### 💰 Your new limit
-**$${offer.totalBalance.toLocaleString()} MXN**
+### 💰 **Your new credit limit**
+
+**$${formatCurrency(offer.totalBalance)} MXN**
+
+${debtPayoffAmount > 0 ? `• **$${formatCurrency(debtPayoffAmount)}** to payoff your debt now` : ''}
+${availableCredit > 0 ? `• **$${formatCurrency(availableCredit)}** available to borrow whenever you need` : ''}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### 📊 Credit breakdown
-
-**$${debtPayoffAmount.toLocaleString()}** to payoff your debt now
-${availableCredit > 0 ? `**$${availableCredit.toLocaleString()}** to borrow whenever you need` : ''}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-### 💰 Interest savings
-
-**Monthly savings:** **$${offer.monthlyInterestSavings.toFixed(2)} MXN**
-**Weekly savings:** **$${offer.weeklySavings.toFixed(2)} MXN**
-**Estimated annual savings:** **$${offer.annualInterestSavings.toFixed(2)} MXN**
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-### 📋 Offer details
+### 📋 **Your offer details**
 
 • **Consolidated rate:** ${offer.consolidationRate.toFixed(2)}% weekly
 • **Term:** ${termMonths} ${termMonths === 1 ? 'month' : 'months'}
+• **Weekly savings:** **$${formatCurrency(offer.weeklySavings)} MXN**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1064,18 +1052,16 @@ ${availableCredit > 0 ? `**$${availableCredit.toLocaleString()}** to borrow when
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 ### 💡 Need a little more for your expenses?
 
-I can increase your limit by an additional **20%** ($${additional20Percent.toLocaleString()} MXN more) to help cover any expenses you might encounter, so you don't need to go to other lenders.
+I can increase your limit by an additional **20%** ($${formatCurrency(additional20Percent)} MXN more) to help cover any expenses you might encounter, so you don't need to go to other lenders.
 
 **Benefits:**
-• **$${additional20Percent.toLocaleString()} MXN extra** available when you need it
+• **$${formatCurrency(additional20Percent)} MXN extra** available when you need it
 • **Same rate:** ${offer.consolidationRate.toFixed(2)}% weekly (no change)
 • **One place** for all your loans - simpler and more convenient
 
-Would you like to add this extra $${additional20Percent.toLocaleString()} MXN to your offer?`;
+Would you like to add this extra $${formatCurrency(additional20Percent)} MXN to your offer?`;
             
             messages.push({ 
                 role: 'assistant', 
