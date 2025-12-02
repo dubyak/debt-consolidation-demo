@@ -294,24 +294,19 @@
         }
 
         function calculateConsolidationOffer(loans, talaRate, talaLimit) {
-            // Include Tala loan
-            const talaLoan = {
-                lender: 'Tala',
-                balance: customerProfile.currentLimit,
-                weeklyRate: customerProfile.currentRate,
-                monthlyPayment: customerProfile.currentLimit * (customerProfile.currentRate / 100) * 4.33 // Approximate
-            };
+            // Don't include Tala loan in consolidation - customers are in good standing
+            // Only consolidate the other loans
+            const loansToConsolidate = loans; // Just the extracted loans, not Tala
             
-            const allLoans = [talaLoan, ...loans];
             const totalBalance = Math.min(
-                allLoans.reduce((sum, loan) => sum + (parseFloat(loan.balance) || 0), 0),
+                loansToConsolidate.reduce((sum, loan) => sum + (parseFloat(loan.balance) || 0), 0),
                 15000 // Max limit
             );
             
-            const weightedRate = calculateWeightedAverageRate(allLoans);
+            const weightedRate = calculateWeightedAverageRate(loansToConsolidate);
             
-            // Ensure minimum savings of $100 MXN/week
-            const currentWeeklyInterest = allLoans.reduce((sum, loan) => {
+            // Calculate current costs (other loans only, not Tala)
+            const currentWeeklyInterest = loansToConsolidate.reduce((sum, loan) => {
                 return sum + calculateWeeklyInterest(loan.balance, loan.weeklyRate);
             }, 0);
             
@@ -326,7 +321,7 @@
                 weeklySavings = currentWeeklyInterest - newWeeklyInterest;
             }
             
-            const currentMonthlyPayment = calculateTotalMonthlyPayment(allLoans);
+            const currentMonthlyPayment = calculateTotalMonthlyPayment(loansToConsolidate);
             const newMonthlyPayment = totalBalance * (consolidationWeeklyRate / 100) * 4.33; // Approximate
             const monthlySavings = currentMonthlyPayment - newMonthlyPayment;
             
@@ -348,7 +343,8 @@
                 monthlyInterestSavings: Math.max(monthlyInterestSavings, monthlySavings * 0.8), // Approximate
                 annualInterestSavings: Math.max(annualInterestSavings, weeklySavings * 52),
                 remainingCredit: Math.max(0, 15000 - totalBalance),
-                loans: allLoans
+                loans: loansToConsolidate,
+                loanCount: loansToConsolidate.length
             };
         }
 
@@ -688,8 +684,9 @@ Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándo
                         });
                     }
                     
-                    // Add "View offer" button for review screen
-                    if (msg.showOfferButton) {
+                    // Remove "View offer" button - offer shows automatically
+                    // Keeping showOfferButton check for backward compatibility but not rendering button
+                    if (msg.showOfferButton && false) {
                         const buttonDiv = document.createElement('div');
                         buttonDiv.className = 'mt-3';
                         const viewOfferBtn = document.createElement('button');
@@ -874,6 +871,8 @@ Ready to get started? I just need you to share screenshots of 3 loans you have w
 
 **Tasa:** ${offer.consolidationRate.toFixed(2)}% semanal (sin cambios)
 
+**Ahorras:** **$${formatCurrency(offer.monthlySavings)} cada mes** 💰
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ¡Excelente decisión! Ahora tienes más flexibilidad para cubrir cualquier gasto que surja sin tener que ir con otros prestamistas. 🎉`
@@ -896,6 +895,8 @@ Ready to get started? I just need you to share screenshots of 3 loans you have w
 **$${formatCurrency(newMonthlyPayment)} MXN/month**
 
 **Rate:** ${offer.consolidationRate.toFixed(2)}% weekly (no change)
+
+**You save:** **$${formatCurrency(offer.monthlySavings)} each month** 💰
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -929,6 +930,10 @@ Great decision! Now you have more flexibility to cover any expenses that come up
             const totalMonthlyPayment = calculateTotalMonthlyPayment(allLoansForReview);
             const totalBalance = allLoansForReview.reduce((sum, loan) => sum + (parseFloat(loan.balance) || 0), 0);
             
+            const consolidationLoanCount = extractedLoans.length;
+            const consolidationTotal = extractedLoans.reduce((sum, loan) => sum + (parseFloat(loan.balance) || 0), 0);
+            const consolidationMonthlyPayment = calculateTotalMonthlyPayment(extractedLoans);
+            
             const reviewText = language === 'es'
                 ? `**Revisión de tus préstamos**
 
@@ -939,6 +944,7 @@ ${allLoansForReview.map((loan, idx) => `• **${loan.lender}**: $${parseFloat(lo
 **Resumen:**
 • **Pago mensual total:** $${totalMonthlyPayment.toLocaleString()}/mes
 • **Deuda total:** $${totalBalance.toLocaleString()}
+• **Consolidarás ${consolidationLoanCount} ${consolidationLoanCount === 1 ? 'préstamo' : 'préstamos'} en 1** ($${consolidationTotal.toLocaleString()} MXN)
 
 ¡Perfecto! Ahora puedo mostrarte tu oferta de consolidación con todos los detalles.`
                 : `**Review your loans**
@@ -950,6 +956,7 @@ ${allLoansForReview.map((loan, idx) => `• **${loan.lender}**: $${parseFloat(lo
 **Summary:**
 • **Total monthly payment:** $${totalMonthlyPayment.toLocaleString()}/month
 • **Total debt:** $${totalBalance.toLocaleString()}
+• **You'll consolidate ${consolidationLoanCount} ${consolidationLoanCount === 1 ? 'loan' : 'loans'} into 1** ($${consolidationTotal.toLocaleString()} MXN)
 
 Perfect! Now I can show you your consolidation offer with all the details.`;
             
@@ -1006,7 +1013,9 @@ ${termMonths > 1 ? `━━━━━━━━━━━━━━━━━━━━
 
 **Costo actual:** ~~$${formatCurrency(totalCostCurrent)} MXN~~
 **Costo consolidado:** **$${formatCurrency(totalCostNew)} MXN**
-**Ahorras:** **$${formatCurrency(totalCostSavings)} MXN** 🎉` : ''}
+**Ahorras:** **$${formatCurrency(totalCostSavings)} MXN** 🎉
+
+*¡Eso es como ahorrar $${formatCurrency(offer.monthlySavings)} cada mes!*` : ''}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1060,13 +1069,17 @@ ${termMonths > 1 ? `━━━━━━━━━━━━━━━━━━━━
 
 **Current cost:** ~~$${formatCurrency(totalCostCurrent)} MXN~~
 **Consolidated cost:** **$${formatCurrency(totalCostNew)} MXN**
-**Save:** **$${formatCurrency(totalCostSavings)} MXN** 🎉` : ''}
+**Save:** **$${formatCurrency(totalCostSavings)} MXN** 🎉
+
+*That's like saving $${formatCurrency(offer.monthlySavings)} every month!*` : ''}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ### 💰 **Your new credit limit**
 
 **$${formatCurrency(creditLimit)} MXN**
+
+**This credit covers all ${offer.loanCount || extractedLoans.length} of your current ${(offer.loanCount || extractedLoans.length) === 1 ? 'loan' : 'loans'}**
 
 **Breakdown:**
 • **$${formatCurrency(debtPayoffAmount)}** available to payoff your debt
