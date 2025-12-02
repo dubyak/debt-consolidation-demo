@@ -593,6 +593,9 @@ Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándo
             // Line breaks
             html = html.replace(/\n/g, '<br>');
             
+            // Replace separator lines with CSS borders to prevent overflow
+            html = html.replace(/━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━/g, '<div class="border-t border-gray-300 my-2"></div>');
+            
             return html;
         }
 
@@ -646,7 +649,7 @@ Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándo
                 if (msg.role === 'assistant') {
                     // Special styling for offer messages
                     if (msg.isOffer) {
-                        textDiv.className = `px-4 py-3 rounded-2xl text-sm leading-relaxed bg-gradient-to-br from-teal-50 to-emerald-50 border-2 border-teal-300 shadow-md`;
+                        textDiv.className = `px-4 py-3 rounded-2xl text-sm leading-relaxed bg-gradient-to-br from-teal-50 to-emerald-50 border-2 border-teal-300 shadow-md overflow-hidden break-words`;
                     }
                     
                     textDiv.innerHTML = formatMessage(msg.content);
