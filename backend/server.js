@@ -84,7 +84,16 @@ app.post('/api/chat', async (req, res) => {
 
 // Serve the HTML file at root
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    const htmlPath = path.join(__dirname, 'public', 'index.html');
+    console.log('Serving HTML from:', htmlPath);
+    console.log('Public dir exists:', require('fs').existsSync(path.join(__dirname, 'public')));
+    console.log('HTML file exists:', require('fs').existsSync(htmlPath));
+    res.sendFile(htmlPath, (err) => {
+        if (err) {
+            console.error('Error serving HTML:', err);
+            res.status(500).send('Error loading page');
+        }
+    });
 });
 
 app.listen(PORT, () => {
