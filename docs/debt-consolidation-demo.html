@@ -846,39 +846,57 @@ Ready to get started? I just need you to share screenshots of 3 loans you have w
             const newTotal = offerMsg.extraTotal;
             const newMonthlyPayment = newTotal * (offer.consolidationRate / 100) * 4.33;
             
+            const formatCurrency = (amount) => {
+                return parseFloat(amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            };
+            
+            const debtPayoff = offerMsg.debtPayoffAmount || Math.min(offer.totalBalance, 15000);
+            
             const confirmText = language === 'es'
                 ? `¡Perfecto! He actualizado tu oferta:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### 💰 Nuevo límite total
-**$${newTotal.toLocaleString()} MXN**
+### 💰 **Nuevo límite total**
+
+**$${formatCurrency(newTotal)} MXN**
 
 **Desglose:**
-• $${Math.min(offer.totalBalance, 15000).toLocaleString()} para consolidar tus deudas
-• $${extraAmount.toLocaleString()} adicionales para tus gastos
+• **$${formatCurrency(debtPayoff)}** para consolidar tus deudas
+• **$${formatCurrency(extraAmount)}** adicionales para tus gastos
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**Nuevo pago mensual:** $${newMonthlyPayment.toFixed(2)} MXN
+### 💵 **Nuevo pago mensual**
+
+**$${formatCurrency(newMonthlyPayment)} MXN/mes**
+
 **Tasa:** ${offer.consolidationRate.toFixed(2)}% semanal (sin cambios)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ¡Excelente decisión! Ahora tienes más flexibilidad para cubrir cualquier gasto que surja sin tener que ir con otros prestamistas. 🎉`
                 : `Perfect! I've updated your offer:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### 💰 New total limit
-**$${newTotal.toLocaleString()} MXN**
+### 💰 **New total limit**
+
+**$${formatCurrency(newTotal)} MXN**
 
 **Breakdown:**
-• $${Math.min(offer.totalBalance, 15000).toLocaleString()} to consolidate your debts
-• $${extraAmount.toLocaleString()} extra for your expenses
+• **$${formatCurrency(debtPayoff)}** to consolidate your debts
+• **$${formatCurrency(extraAmount)}** extra for your expenses
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**New monthly payment:** $${newMonthlyPayment.toFixed(2)} MXN
+### 💵 **New monthly payment**
+
+**$${formatCurrency(newMonthlyPayment)} MXN/month**
+
 **Rate:** ${offer.consolidationRate.toFixed(2)}% weekly (no change)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Great decision! Now you have more flexibility to cover any expenses that come up without needing to go to other lenders. 🎉`;
             
@@ -913,24 +931,24 @@ Great decision! Now you have more flexibility to cover any expenses that come up
             const reviewText = language === 'es'
                 ? `**Revisión de tus préstamos**
 
-He recopilado la información de tus préstamos. Aquí está el resumen:
+He recopilado la información de tus préstamos:
 
-${allLoansForReview.map((loan, idx) => `${idx + 1}. **${loan.lender}**: $${parseFloat(loan.balance).toLocaleString()} MXN, ${loan.weeklyRate}% semanal, $${parseFloat(loan.monthlyPayment || 0).toLocaleString()}/mes`).join('\n')}
+${allLoansForReview.map((loan, idx) => `• **${loan.lender}**: $${parseFloat(loan.balance).toLocaleString()} MXN (${loan.weeklyRate}% semanal)`).join('\n')}
 
 **Resumen:**
-• Pago mensual total: **$${totalMonthlyPayment.toLocaleString()}/mes**
-• Deuda total: **$${totalBalance.toLocaleString()}**
+• **Pago mensual total:** $${totalMonthlyPayment.toLocaleString()}/mes
+• **Deuda total:** $${totalBalance.toLocaleString()}
 
 ¡Perfecto! Ahora puedo mostrarte tu oferta de consolidación con todos los detalles.`
                 : `**Review your loans**
 
-I've collected information about your loans. Here's the summary:
+I've collected information about your loans:
 
-${allLoansForReview.map((loan, idx) => `${idx + 1}. **${loan.lender}**: $${parseFloat(loan.balance).toLocaleString()} MXN, ${loan.weeklyRate}% weekly, $${parseFloat(loan.monthlyPayment || 0).toLocaleString()}/month`).join('\n')}
+${allLoansForReview.map((loan, idx) => `• **${loan.lender}**: $${parseFloat(loan.balance).toLocaleString()} MXN (${loan.weeklyRate}% weekly)`).join('\n')}
 
 **Summary:**
-• Total monthly payment: **$${totalMonthlyPayment.toLocaleString()}/month**
-• Total debt: **$${totalBalance.toLocaleString()}**
+• **Total monthly payment:** $${totalMonthlyPayment.toLocaleString()}/month
+• **Total debt:** $${totalBalance.toLocaleString()}
 
 Perfect! Now I can show you your consolidation offer with all the details.`;
             
@@ -959,12 +977,14 @@ Perfect! Now I can show you your consolidation offer with all the details.`;
                 return parseFloat(amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
             };
             
-            // Calculate breakdown
-            const debtPayoffAmount = Math.min(offer.totalBalance, 15000);
-            const availableCredit = offer.remainingCredit;
-            const additional20Percent = Math.floor(offer.totalBalance * 0.2);
-            const totalWithExtra = Math.min(offer.totalBalance + additional20Percent, 15000);
-            const extraAvailable = Math.max(0, totalWithExtra - offer.totalBalance);
+            // Calculate breakdown - clarify credit limit vs debt payoff
+            const totalDebt = extractedLoans.reduce((sum, loan) => sum + (parseFloat(loan.balance) || 0), 0) + customerProfile.currentLimit;
+            const debtPayoffAmount = Math.min(totalDebt, 15000); // Actual debt to pay off
+            const creditLimit = Math.min(offer.totalBalance, 15000); // Total credit limit offered
+            const availableCredit = Math.max(0, creditLimit - debtPayoffAmount); // Remaining credit after paying debt
+            const additional20Percent = Math.floor(creditLimit * 0.2);
+            const totalWithExtra = Math.min(creditLimit + additional20Percent, 15000);
+            const extraAvailable = Math.max(0, totalWithExtra - creditLimit);
             
             let offerText = language === 'es'
                 ? `🎉 **¡Tu oferta está lista!**
@@ -975,51 +995,52 @@ Perfect! Now I can show you your consolidation offer with all the details.`;
 
 **$${formatCurrency(offer.newMonthlyPayment)} MXN/mes**
 
-**Antes pagabas:** ~~$${formatCurrency(offer.currentMonthlyPayment)}/mes~~
-**Ahora pagarás:** **$${formatCurrency(offer.newMonthlyPayment)}/mes**
-**Ahorras cada mes:** **$${formatCurrency(offer.monthlySavings)} MXN** 💰
+**Antes:** ~~$${formatCurrency(offer.currentMonthlyPayment)}/mes~~
+**Ahora:** **$${formatCurrency(offer.newMonthlyPayment)}/mes**
+**Ahorras:** **$${formatCurrency(offer.monthlySavings)} MXN cada mes** 💰
 
 ${termMonths > 1 ? `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ### 📊 **AHORRO TOTAL EN ${termMonths} MESES**
 
-**Costo total de tus préstamos actuales:** ~~$${formatCurrency(totalCostCurrent)} MXN~~
-**Costo total del préstamo consolidado:** **$${formatCurrency(totalCostNew)} MXN**
-**Ahorro total:** **$${formatCurrency(totalCostSavings)} MXN** 🎉` : ''}
+**Costo actual:** ~~$${formatCurrency(totalCostCurrent)} MXN~~
+**Costo consolidado:** **$${formatCurrency(totalCostNew)} MXN**
+**Ahorras:** **$${formatCurrency(totalCostSavings)} MXN** 🎉` : ''}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ### 💰 **Tu nuevo límite de crédito**
 
-**$${formatCurrency(offer.totalBalance)} MXN**
+**$${formatCurrency(creditLimit)} MXN**
 
-${debtPayoffAmount > 0 ? `• **$${formatCurrency(debtPayoffAmount)}** para pagar tus deudas ahora` : ''}
+**Desglose:**
+• **$${formatCurrency(debtPayoffAmount)}** para pagar tus deudas ahora
 ${availableCredit > 0 ? `• **$${formatCurrency(availableCredit)}** disponible para usar cuando lo necesites` : ''}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### 📋 **Detalles de tu oferta**
+### 📋 **Detalles**
 
-• **Tasa consolidada:** ${offer.consolidationRate.toFixed(2)}% semanal
+• **Tasa:** ${offer.consolidationRate.toFixed(2)}% semanal
 • **Plazo:** ${termMonths} ${termMonths === 1 ? 'mes' : 'meses'}
 • **Ahorro semanal:** **$${formatCurrency(offer.weeklySavings)} MXN**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✅ **¡Estás aprobado!** El préstamo de consolidación pagará todos tus otros préstamos directamente.
+✅ **¡Estás aprobado!** El préstamo pagará todos tus otros préstamos directamente.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### 💡 ¿Necesitas un poco más para tus gastos?
+### 💡 ¿Necesitas más para tus gastos?
 
-Puedo aumentar tu límite en un **20% adicional** ($${formatCurrency(additional20Percent)} MXN más) para ayudarte a cubrir cualquier gasto que pueda surgir, así no tendrás que ir con otros prestamistas.
+Puedo aumentar tu límite en **20% adicional** ($${formatCurrency(additional20Percent)} MXN más) con la misma tasa.
 
 **Beneficios:**
-• **$${formatCurrency(additional20Percent)} MXN adicionales** disponibles cuando los necesites
-• **La misma tasa:** ${offer.consolidationRate.toFixed(2)}% semanal (sin cambios)
-• **Un solo lugar** para todos tus préstamos - más simple y conveniente
+• **$${formatCurrency(additional20Percent)} MXN** adicionales disponibles
+• **Misma tasa:** ${offer.consolidationRate.toFixed(2)}% semanal
+• **Un solo lugar** para todos tus préstamos
 
-¿Te gustaría agregar estos $${formatCurrency(additional20Percent)} MXN adicionales a tu oferta?`
+¿Te gustaría agregar estos $${formatCurrency(additional20Percent)} MXN adicionales?`
                 : `🎉 **Your offer is here!**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1028,51 +1049,52 @@ Puedo aumentar tu límite en un **20% adicional** ($${formatCurrency(additional2
 
 **$${formatCurrency(offer.newMonthlyPayment)} MXN/month**
 
-**You were paying:** ~~$${formatCurrency(offer.currentMonthlyPayment)}/month~~
-**You'll now pay:** **$${formatCurrency(offer.newMonthlyPayment)}/month**
-**You save each month:** **$${formatCurrency(offer.monthlySavings)} MXN** 💰
+**Before:** ~~$${formatCurrency(offer.currentMonthlyPayment)}/month~~
+**Now:** **$${formatCurrency(offer.newMonthlyPayment)}/month**
+**Save:** **$${formatCurrency(offer.monthlySavings)} MXN each month** 💰
 
 ${termMonths > 1 ? `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ### 📊 **TOTAL SAVINGS OVER ${termMonths} MONTHS**
 
-**Total cost of your current loans:** ~~$${formatCurrency(totalCostCurrent)} MXN~~
-**Total cost of consolidated loan:** **$${formatCurrency(totalCostNew)} MXN**
-**Total savings:** **$${formatCurrency(totalCostSavings)} MXN** 🎉` : ''}
+**Current cost:** ~~$${formatCurrency(totalCostCurrent)} MXN~~
+**Consolidated cost:** **$${formatCurrency(totalCostNew)} MXN**
+**Save:** **$${formatCurrency(totalCostSavings)} MXN** 🎉` : ''}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ### 💰 **Your new credit limit**
 
-**$${formatCurrency(offer.totalBalance)} MXN**
+**$${formatCurrency(creditLimit)} MXN**
 
-${debtPayoffAmount > 0 ? `• **$${formatCurrency(debtPayoffAmount)}** to payoff your debt now` : ''}
+**Breakdown:**
+• **$${formatCurrency(debtPayoffAmount)}** to payoff your debt now
 ${availableCredit > 0 ? `• **$${formatCurrency(availableCredit)}** available to borrow whenever you need` : ''}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### 📋 **Your offer details**
+### 📋 **Details**
 
-• **Consolidated rate:** ${offer.consolidationRate.toFixed(2)}% weekly
+• **Rate:** ${offer.consolidationRate.toFixed(2)}% weekly
 • **Term:** ${termMonths} ${termMonths === 1 ? 'month' : 'months'}
 • **Weekly savings:** **$${formatCurrency(offer.weeklySavings)} MXN**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✅ **You're approved!** The consolidation loan will pay off all your other loans directly.
+✅ **You're approved!** The loan will pay off all your other loans directly.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### 💡 Need a little more for your expenses?
+### 💡 Need more for your expenses?
 
-I can increase your limit by an additional **20%** ($${formatCurrency(additional20Percent)} MXN more) to help cover any expenses you might encounter, so you don't need to go to other lenders.
+I can increase your limit by an additional **20%** ($${formatCurrency(additional20Percent)} MXN more) with the same rate.
 
 **Benefits:**
-• **$${formatCurrency(additional20Percent)} MXN extra** available when you need it
-• **Same rate:** ${offer.consolidationRate.toFixed(2)}% weekly (no change)
-• **One place** for all your loans - simpler and more convenient
+• **$${formatCurrency(additional20Percent)} MXN** extra available
+• **Same rate:** ${offer.consolidationRate.toFixed(2)}% weekly
+• **One place** for all your loans
 
-Would you like to add this extra $${formatCurrency(additional20Percent)} MXN to your offer?`;
+Would you like to add this extra $${formatCurrency(additional20Percent)} MXN?`;
             
             messages.push({ 
                 role: 'assistant', 
@@ -1081,7 +1103,9 @@ Would you like to add this extra $${formatCurrency(additional20Percent)} MXN to 
                 hasExtraOption: true,
                 extraAmount: additional20Percent,
                 extraTotal: totalWithExtra,
-                baseOffer: offer
+                baseOffer: offer,
+                creditLimit: creditLimit,
+                debtPayoffAmount: debtPayoffAmount
             });
             renderMessages();
         }
