@@ -672,18 +672,33 @@ Ready to get started? I just need you to share screenshots of 3 loans you have w
                 
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error || 'API request failed');
+                    console.error('API Error:', response.status, errorData);
+                    throw new Error(errorData.error || errorData.details || 'API request failed');
                 }
 
                 const data = await response.json();
+                console.log('API Response:', data);
                 // Backend returns normalized format: { content: [{ text: "..." }] }
                 const assistantMessage = data.content?.[0]?.text || data.content || 'Error: Invalid response';
                 messages.push({ role: 'assistant', content: assistantMessage });
             } catch (error) {
                 console.error('Error sending message:', error);
-                const errorMsg = language === 'es' 
-                    ? '¡Ups, perdón por eso! Tuve un pequeño problema. ¿Puedes intentar de nuevo?'
-                    : 'Oops, sorry about that! Had a little hiccup on my end. Mind trying again?';
+                console.error('Error details:', error.message);
+                // Show more helpful error message
+                let errorMsg;
+                if (error.message.includes('OPENAI_API_KEY')) {
+                    errorMsg = language === 'es'
+                        ? 'Error de configuración del servidor. Por favor, contacta al administrador.'
+                        : 'Server configuration error. Please contact the administrator.';
+                } else if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
+                    errorMsg = language === 'es'
+                        ? 'Error de conexión. Por favor, verifica tu conexión a internet.'
+                        : 'Connection error. Please check your internet connection.';
+                } else {
+                    errorMsg = language === 'es' 
+                        ? '¡Ups, perdón por eso! Tuve un pequeño problema. ¿Puedes intentar de nuevo?'
+                        : 'Oops, sorry about that! Had a little hiccup on my end. Mind trying again?';
+                }
                 messages.push({ role: 'assistant', content: errorMsg });
             }
             
