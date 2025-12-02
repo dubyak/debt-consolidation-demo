@@ -79,6 +79,17 @@
                 </div>
             </div>
             
+            <!-- Progress Indicator -->
+            <div id="progressIndicator" class="hidden bg-gray-100 px-4 py-2 border-b border-gray-200">
+                <div class="flex items-center justify-between text-xs text-gray-600 mb-1">
+                    <span id="progressStep">Step 1 of 4</span>
+                    <span id="progressPercent">25%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                    <div id="progressBar" class="bg-teal-500 h-1.5 rounded-full transition-all duration-300" style="width: 25%"></div>
+                </div>
+            </div>
+
             <!-- Header -->
             <div class="bg-gradient-to-r from-teal-500 to-emerald-500 px-4 py-4 flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
@@ -319,10 +330,11 @@
             const newMonthlyPayment = totalBalance * (consolidationWeeklyRate / 100) * 4.33; // Approximate
             const monthlySavings = currentMonthlyPayment - newMonthlyPayment;
             
-            // Calculate debt-free timeline (months)
-            const debtFreeMonths = totalBalance > 0 && newMonthlyPayment > 0 
-                ? Math.ceil(totalBalance / newMonthlyPayment)
-                : 0;
+            // Calculate interest savings
+            const currentMonthlyInterest = currentWeeklyInterest * 4.33;
+            const newMonthlyInterest = newWeeklyInterest * 4.33;
+            const monthlyInterestSavings = currentMonthlyInterest - newMonthlyInterest;
+            const annualInterestSavings = weeklySavings * 52;
             
             return {
                 totalBalance,
@@ -331,7 +343,10 @@
                 newMonthlyPayment,
                 monthlySavings,
                 weeklySavings: Math.max(weeklySavings, 100),
-                debtFreeMonths,
+                currentWeeklyInterest,
+                newWeeklyInterest,
+                monthlyInterestSavings: Math.max(monthlyInterestSavings, monthlySavings * 0.8), // Approximate
+                annualInterestSavings: Math.max(annualInterestSavings, weeklySavings * 52),
                 remainingCredit: Math.max(0, 15000 - totalBalance),
                 loans: allLoans
             };
@@ -569,6 +584,11 @@ Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándo
         function formatMessage(text) {
             if (!text) return '';
             
+            // Ensure text is a string
+            if (typeof text !== 'string') {
+                text = String(text);
+            }
+            
             // Escape HTML first
             let html = text
                 .replace(/&/g, '&amp;')
@@ -644,7 +664,15 @@ Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándo
                 
                 // Simple markdown rendering for assistant messages
                 if (msg.role === 'assistant') {
+                    // Special styling for offer messages
+                    if (msg.isOffer) {
+                        textDiv.className = `px-4 py-3 rounded-2xl text-sm leading-relaxed bg-gradient-to-br from-teal-50 to-emerald-50 border-2 border-teal-300 shadow-md`;
+                    }
+                    
                     textDiv.innerHTML = formatMessage(msg.content);
+                    
+                    // Append textDiv first
+                    contentDiv.appendChild(textDiv);
                     
                     // Add confirmation buttons if needed
                     if (msg.needsConfirmation && pendingLoanConfirmation) {
@@ -668,11 +696,47 @@ Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándo
                             rejectLoan();
                         });
                     }
+                    
+                    // Add "View offer" button for review screen
+                    if (msg.showOfferButton) {
+                        const buttonDiv = document.createElement('div');
+                        buttonDiv.className = 'mt-3';
+                        const viewOfferBtn = document.createElement('button');
+                        viewOfferBtn.className = 'w-full px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-semibold transition-colors';
+                        viewOfferBtn.textContent = language === 'es' ? 'Ver oferta' : 'View offer';
+                        viewOfferBtn.addEventListener('click', () => {
+                            showConsolidationOffer();
+                        });
+                        buttonDiv.appendChild(viewOfferBtn);
+                        contentDiv.appendChild(buttonDiv);
+                    }
+                    
+                    // Add extra 20% option buttons for offer
+                    if (msg.hasExtraOption && msg.isOffer) {
+                        const buttonDiv = document.createElement('div');
+                        buttonDiv.className = 'flex gap-2 mt-3';
+                        buttonDiv.innerHTML = `
+                            <button class="accept-extra-btn flex-1 px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg text-sm font-semibold transition-colors">
+                                ${language === 'es' ? '✓ Sí, agregar 20%' : '✓ Yes, add 20%'}
+                            </button>
+                            <button class="decline-extra-btn flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-semibold transition-colors">
+                                ${language === 'es' ? 'No, así está bien' : 'No, this is fine'}
+                            </button>
+                        `;
+                        contentDiv.appendChild(buttonDiv);
+                        
+                        // Add event listeners
+                        buttonDiv.querySelector('.accept-extra-btn').addEventListener('click', () => {
+                            acceptExtraAmount(msg);
+                        });
+                        buttonDiv.querySelector('.decline-extra-btn').addEventListener('click', () => {
+                            declineExtraAmount(msg);
+                        });
+                    }
                 } else {
                     textDiv.textContent = msg.content;
+                    contentDiv.appendChild(textDiv);
                 }
-                
-                contentDiv.appendChild(textDiv);
                 
                 msgDiv.appendChild(contentDiv);
                 elements.messagesArea.appendChild(msgDiv);
@@ -718,6 +782,9 @@ Ready to get started? I just need you to share screenshots of 3 loans you have w
         async function startConversation() {
             isLoading = true;
             renderMessages();
+            
+            // Initialize progress
+            updateProgress(1, 4);
 
             // Use hardcoded welcome message
             const welcomeMessage = getWelcomeMessage();
@@ -727,20 +794,44 @@ Ready to get started? I just need you to share screenshots of 3 loans you have w
             renderMessages();
         }
 
+        // Update progress indicator
+        function updateProgress(step, totalSteps = 4) {
+            const progressIndicator = document.getElementById('progressIndicator');
+            const progressStep = document.getElementById('progressStep');
+            const progressPercent = document.getElementById('progressPercent');
+            const progressBar = document.getElementById('progressBar');
+            
+            if (!progressIndicator) return;
+            
+            const percent = (step / totalSteps) * 100;
+            const stepLabels = language === 'es'
+                ? ['Recopilando préstamos', 'Revisando detalles', 'Calculando oferta', 'Ver oferta']
+                : ['Collecting loans', 'Reviewing details', 'Calculating offer', 'View offer'];
+            
+            progressIndicator.classList.remove('hidden');
+            progressStep.textContent = `${stepLabels[step - 1]} (${step}/${totalSteps})`;
+            progressPercent.textContent = `${Math.round(percent)}%`;
+            progressBar.style.width = `${percent}%`;
+        }
+
         // Handle loan confirmation
         function confirmLoan(loanData) {
             extractedLoans.push(loanData);
             pendingLoanConfirmation = null;
             
+            // Update progress
+            const currentStep = Math.min(extractedLoans.length, 3);
+            updateProgress(currentStep);
+            
             const confirmMsg = language === 'es'
-                ? `¡Perfecto! He registrado tu préstamo con ${loanData.lender}. ${extractedLoans.length < 3 ? '¿Tienes otro préstamo que compartir?' : 'Ahora puedo mostrarte tu oferta de consolidación.'}`
-                : `Perfect! I've recorded your loan with ${loanData.lender}. ${extractedLoans.length < 3 ? 'Do you have another loan to share?' : 'Now I can show you your consolidation offer.'}`;
+                ? `¡Perfecto! He registrado tu préstamo con **${loanData.lender}** por **$${parseFloat(loanData.balance).toLocaleString()} MXN** con una tasa de **${loanData.weeklyRate}%** semanal. ${extractedLoans.length < 3 ? '¿Tienes otro préstamo que compartir?' : 'Ahora puedo mostrarte tu oferta de consolidación.'}`
+                : `Perfect! I've recorded your loan with **${loanData.lender}** for **$${parseFloat(loanData.balance).toLocaleString()} MXN** at **${loanData.weeklyRate}%** weekly rate. ${extractedLoans.length < 3 ? 'Do you have another loan to share?' : 'Now I can show you your consolidation offer.'}`;
             
             messages.push({ role: 'assistant', content: confirmMsg });
             
-            // If we have 3+ loans, calculate and show offer
+            // If we have 3+ loans, show review screen
             if (extractedLoans.length >= 3) {
-                showConsolidationOffer();
+                showReviewScreen();
             } else {
                 renderMessages();
             }
@@ -755,45 +846,203 @@ Ready to get started? I just need you to share screenshots of 3 loans you have w
             renderMessages();
         }
 
+        // Handle extra 20% option
+        function acceptExtraAmount(offerMsg) {
+            const offer = offerMsg.baseOffer;
+            const extraAmount = offerMsg.extraAmount;
+            const newTotal = offerMsg.extraTotal;
+            const newMonthlyPayment = newTotal * (offer.consolidationRate / 100) * 4.33;
+            
+            const confirmText = language === 'es'
+                ? `¡Perfecto! He actualizado tu oferta:
+
+**Nuevo límite total:** $${newTotal.toLocaleString()} MXN
+• $${Math.min(offer.totalBalance, 15000).toLocaleString()} para pagar tus deudas
+• $${extraAmount.toLocaleString()} adicionales para tus otras necesidades
+
+**Nuevo pago mensual:** $${newMonthlyPayment.toFixed(2)} MXN
+**Tasa:** ${offer.consolidationRate.toFixed(2)}% semanal (sin cambios)
+
+¡Excelente decisión! Ahora tienes todo lo que necesitas en un solo lugar, sin tener que buscar con otros prestamistas.`
+                : `Perfect! I've updated your offer:
+
+**New total limit:** $${newTotal.toLocaleString()} MXN
+• $${Math.min(offer.totalBalance, 15000).toLocaleString()} to payoff your debts
+• $${extraAmount.toLocaleString()} extra for your other needs
+
+**New monthly payment:** $${newMonthlyPayment.toFixed(2)} MXN
+**Rate:** ${offer.consolidationRate.toFixed(2)}% weekly (unchanged)
+
+Great decision! Now you have everything you need in one place, without having to look elsewhere.`;
+            
+            messages.push({ role: 'assistant', content: confirmText });
+            renderMessages();
+        }
+
+        function declineExtraAmount(offerMsg) {
+            const confirmText = language === 'es'
+                ? 'Perfecto, la oferta base está lista para ti. ¿Hay algo más en lo que pueda ayudarte?'
+                : 'Perfect, the base offer is ready for you. Is there anything else I can help with?';
+            messages.push({ role: 'assistant', content: confirmText });
+            renderMessages();
+        }
+
+        // Show review screen
+        function showReviewScreen() {
+            updateProgress(3, 4);
+            
+            const totalMonthlyPayment = calculateTotalMonthlyPayment(extractedLoans);
+            const totalBalance = extractedLoans.reduce((sum, loan) => sum + (parseFloat(loan.balance) || 0), 0);
+            
+            const reviewText = language === 'es'
+                ? `**Revisión de tus préstamos**
+
+He recopilado la información de tus préstamos. Aquí está el resumen:
+
+${extractedLoans.map((loan, idx) => `${idx + 1}. **${loan.lender}**: $${parseFloat(loan.balance).toLocaleString()} MXN, ${loan.weeklyRate}% semanal, $${parseFloat(loan.monthlyPayment || 0).toLocaleString()}/mes`).join('\n')}
+
+**Resumen:**
+• Pago mensual total: **$${totalMonthlyPayment.toLocaleString()}/mes**
+• Deuda total: **$${totalBalance.toLocaleString()}**
+
+¿Quieres ver tu oferta de consolidación?`
+                : `**Review your loans**
+
+I've collected information about your loans. Here's the summary:
+
+${extractedLoans.map((loan, idx) => `${idx + 1}. **${loan.lender}**: $${parseFloat(loan.balance).toLocaleString()} MXN, ${loan.weeklyRate}% weekly, $${parseFloat(loan.monthlyPayment || 0).toLocaleString()}/month`).join('\n')}
+
+**Summary:**
+• Total monthly payment: **$${totalMonthlyPayment.toLocaleString()}/month**
+• Total debt: **$${totalBalance.toLocaleString()}**
+
+Would you like to see your consolidation offer?`;
+            
+            messages.push({ role: 'assistant', content: reviewText, showOfferButton: true });
+            renderMessages();
+        }
+
         // Show consolidation offer using deterministic calculations
         function showConsolidationOffer() {
+            updateProgress(4, 4);
             const offer = calculateConsolidationOffer(extractedLoans, customerProfile.currentRate, customerProfile.currentLimit);
             
-            let offerText = language === 'es'
-                ? `**¡Perfecto! Aquí está tu oferta de consolidación:**
-
-**Tus préstamos actuales:**
-${offer.loans.map(loan => `• ${loan.lender}: $${loan.balance.toLocaleString()} MXN, ${loan.weeklyRate}% semanal`).join('\n')}
-
-**Oferta de consolidación:**
-• **Nuevo límite:** $${offer.totalBalance.toLocaleString()} MXN
-• **Tasa consolidada:** ${offer.consolidationRate.toFixed(2)}% semanal
-• **Pago mensual actual:** $${offer.currentMonthlyPayment.toLocaleString()} MXN
-• **Nuevo pago mensual:** $${offer.newMonthlyPayment.toLocaleString()} MXN
-• **Ahorro mensual:** $${offer.monthlySavings.toLocaleString()} MXN
-• **Ahorro semanal:** $${offer.weeklySavings.toFixed(2)} MXN
-• **Sal de deudas en:** ${offer.debtFreeMonths} meses
-${offer.remainingCredit > 0 ? `• **Crédito disponible:** $${offer.remainingCredit.toLocaleString()} MXN` : ''}
-
-¡Estás aprobado! El préstamo de consolidación pagará todos tus otros préstamos directamente.`
-                : `**Perfect! Here's your consolidation offer:**
-
-**Your current loans:**
-${offer.loans.map(loan => `• ${loan.lender}: $${loan.balance.toLocaleString()} MXN, ${loan.weeklyRate}% weekly`).join('\n')}
-
-**Consolidation offer:**
-• **New limit:** $${offer.totalBalance.toLocaleString()} MXN
-• **Consolidated rate:** ${offer.consolidationRate.toFixed(2)}% weekly
-• **Current monthly payment:** $${offer.currentMonthlyPayment.toLocaleString()} MXN
-• **New monthly payment:** $${offer.newMonthlyPayment.toLocaleString()} MXN
-• **Monthly savings:** $${offer.monthlySavings.toLocaleString()} MXN
-• **Weekly savings:** $${offer.weeklySavings.toFixed(2)} MXN
-• **Debt-free in:** ${offer.debtFreeMonths} months
-${offer.remainingCredit > 0 ? `• **Available credit:** $${offer.remainingCredit.toLocaleString()} MXN` : ''}
-
-You're approved! The consolidation loan will pay off all your other loans directly.`;
+            // Calculate breakdown
+            const debtPayoffAmount = Math.min(offer.totalBalance, 15000);
+            const availableCredit = offer.remainingCredit;
+            const additional20Percent = Math.floor(offer.totalBalance * 0.2);
+            const totalWithExtra = Math.min(offer.totalBalance + additional20Percent, 15000);
+            const extraAvailable = Math.max(0, totalWithExtra - offer.totalBalance);
             
-            messages.push({ role: 'assistant', content: offerText });
+            let offerText = language === 'es'
+                ? `🎉 **¡Tu oferta está lista!**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### 💰 Tu nuevo límite
+**$${offer.totalBalance.toLocaleString()} MXN**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### 📊 Desglose del crédito
+
+**$${debtPayoffAmount.toLocaleString()}** para pagar tus deudas ahora
+${availableCredit > 0 ? `**$${availableCredit.toLocaleString()}** para usar cuando lo necesites` : ''}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### 💵 Comparación de pagos
+
+**Pago anterior:** ~~$${offer.currentMonthlyPayment.toLocaleString()}/mes~~
+**Nuevo pago:** **$${offer.newMonthlyPayment.toLocaleString()}/mes**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### 💰 Ahorro en intereses
+
+**Ahorro mensual:** **$${offer.monthlyInterestSavings.toFixed(2)} MXN**
+**Ahorro semanal:** **$${offer.weeklySavings.toFixed(2)} MXN**
+**Ahorro anual estimado:** **$${offer.annualInterestSavings.toFixed(2)} MXN**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### 📋 Detalles de la oferta
+
+• **Tasa consolidada:** ${offer.consolidationRate.toFixed(2)}% semanal
+• **Ahorro mensual total:** $${offer.monthlySavings.toLocaleString()} MXN
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ **¡Estás aprobado!** El préstamo de consolidación pagará todos tus otros préstamos directamente.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### 💡 ¿Necesitas un poco más?
+
+Puedo aumentar tu límite en un **20% adicional** ($${additional20Percent.toLocaleString()} MXN más) para ayudarte a cubrir otras necesidades, así no tendrás que ir con otros prestamistas.
+
+**La tasa se mantiene igual:** ${offer.consolidationRate.toFixed(2)}% semanal
+
+¿Te gustaría agregar estos $${additional20Percent.toLocaleString()} MXN adicionales a tu oferta?`
+                : `🎉 **Your offer is here!**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### 💰 Your new limit
+**$${offer.totalBalance.toLocaleString()} MXN**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### 📊 Credit breakdown
+
+**$${debtPayoffAmount.toLocaleString()}** to payoff your debt now
+${availableCredit > 0 ? `**$${availableCredit.toLocaleString()}** to borrow whenever you need` : ''}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### 💵 Payment comparison
+
+**Old payment:** ~~$${offer.currentMonthlyPayment.toLocaleString()}/month~~
+**New payment:** **$${offer.newMonthlyPayment.toLocaleString()}/month**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### 💰 Interest savings
+
+**Monthly savings:** **$${offer.monthlyInterestSavings.toFixed(2)} MXN**
+**Weekly savings:** **$${offer.weeklySavings.toFixed(2)} MXN**
+**Estimated annual savings:** **$${offer.annualInterestSavings.toFixed(2)} MXN**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### 📋 Offer details
+
+• **Consolidated rate:** ${offer.consolidationRate.toFixed(2)}% weekly
+• **Total monthly savings:** $${offer.monthlySavings.toLocaleString()} MXN
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ **You're approved!** The consolidation loan will pay off all your other loans directly.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### 💡 Need a little more?
+
+I can increase your limit by an additional **20%** ($${additional20Percent.toLocaleString()} MXN more) to help cover any other needs you might have, so you don't need to go to other lenders.
+
+**The rate stays the same:** ${offer.consolidationRate.toFixed(2)}% weekly
+
+Would you like to add this extra $${additional20Percent.toLocaleString()} MXN to your offer?`;
+            
+            messages.push({ 
+                role: 'assistant', 
+                content: offerText, 
+                isOffer: true,
+                hasExtraOption: true,
+                extraAmount: additional20Percent,
+                extraTotal: totalWithExtra,
+                baseOffer: offer
+            });
             renderMessages();
         }
 
@@ -880,16 +1129,32 @@ You're approved! The consolidation loan will pay off all your other loans direct
                         // Store for confirmation
                         pendingLoanConfirmation = loanData;
                         // Show confirmation message
+                        // Format interest rate display (show as displayed in screenshot)
+                        let rateDisplay = '';
+                        if (loanData.monthlyRate && loanData.paymentFrequency === 'mensual') {
+                            rateDisplay = language === 'es' 
+                                ? `${loanData.monthlyRate}% mensual`
+                                : `${loanData.monthlyRate}% monthly`;
+                        } else {
+                            rateDisplay = language === 'es'
+                                ? `${loanData.weeklyRate}% semanal`
+                                : `${loanData.weeklyRate}% weekly`;
+                        }
+                        
                         const confirmText = language === 'es'
-                            ? `Veo que tienes un préstamo con **${loanData.lender}** por **$${parseFloat(loanData.balance).toLocaleString()} MXN** con una tasa de **${loanData.weeklyRate}%** semanal. ¿Es correcto?`
-                            : `I see you have a loan with **${loanData.lender}** for **$${parseFloat(loanData.balance).toLocaleString()} MXN** at **${loanData.weeklyRate}%** weekly rate. Is this correct?`;
+                            ? `Veo que tienes un préstamo con **${loanData.lender}** por **$${parseFloat(loanData.balance).toLocaleString()} MXN** con una tasa de interés de **${rateDisplay}**. ¿Es correcto?`
+                            : `I see you have a loan with **${loanData.lender}** for **$${parseFloat(loanData.balance).toLocaleString()} MXN** at an interest rate of **${rateDisplay}**. Is this correct?`;
                         messages.push({ role: 'assistant', content: confirmText, needsConfirmation: true });
                     } else {
                         throw new Error('Invalid loan data structure');
                     }
                 } else {
                     // Regular text response
-                    const assistantMessage = data.content?.[0]?.text || data.content || 'Error: Invalid response';
+                    let assistantMessage = data.content?.[0]?.text || data.content || 'Error: Invalid response';
+                    // Ensure it's a string
+                    if (typeof assistantMessage !== 'string') {
+                        assistantMessage = String(assistantMessage);
+                    }
                     messages.push({ role: 'assistant', content: assistantMessage });
                 }
             } catch (error) {
