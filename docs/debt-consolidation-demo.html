@@ -377,16 +377,16 @@ CONTEXT:
 - This is a debt consolidation product - ONE loan to replace all their other loans
 
 CONSOLIDATION LOAN LOGIC:
-- We offer ONE consolidation loan that gives them credit to pay off their other loans themselves (including any outstanding Tala balance)
-- The consolidation loan limit = total of all their outstanding loans, UP TO A MAX OF $15,000 MXN
-- The consolidation loan rate = WEIGHTED AVERAGE of all their loan rates (including Tala's rate)
+- We offer ONE consolidation loan that gives them credit to pay off their other loans themselves
+- The consolidation loan limit = total of all their outstanding loans (excluding Tala), UP TO A MAX OF $15,000 MXN
+- The consolidation loan rate is SPECIFICALLY DESIGNED to reduce their monthly payment and total interest costs
 - CRITICAL SAVINGS REQUIREMENT: The consolidation offer MUST save them at least $100 MXN per week in interest costs
 - To ensure minimum savings:
-  1. Calculate current total weekly interest: Sum of (each loan balance × weekly rate) for all loans
+  1. Calculate current total weekly interest: Sum of (each loan balance × weekly rate) for loans being consolidated
   2. Calculate new weekly interest: (total consolidation balance × weighted average weekly rate)
   3. If savings < $100 MXN/week, adjust the consolidation rate downward until savings ≥ $100 MXN/week
-  4. The adjusted rate becomes the consolidation offer rate
-- Show them the math: "Your current loans average X% interest. With consolidation, you get one simple payment at Y% - that's Z pesos saved per week!"
+  4. The adjusted rate becomes the consolidation offer rate - this rate is INTENTIONALLY LOWER to save them money
+- IMPORTANT: Emphasize that this rate is designed specifically to reduce their costs: "This consolidation rate is designed to reduce your monthly payment and save you money on interest. Your current loans cost you $X/month. With consolidation at Y%, you'll pay $Z/month - that's $W saved every month!"
 
 LOAN DATA COLLECTION:
 - For each loan, collect ALL of these details:
@@ -453,16 +453,16 @@ TU ROL:
 - Sé empática sobre el estrés de manejar múltiples préstamos
 
 LÓGICA DEL PRÉSTAMO DE CONSOLIDACIÓN:
-- UN préstamo de consolidación les da crédito para que paguen TODOS sus otros préstamos ellos mismos (incluyendo cualquier saldo pendiente de Tala)
-- Límite del préstamo de consolidación = total de todos los préstamos pendientes, HASTA UN MÁXIMO DE $15,000 MXN
-- Tasa del préstamo de consolidación = PROMEDIO PONDERADO de todas las tasas (incluyendo la de Tala)
+- UN préstamo de consolidación les da crédito para que paguen sus otros préstamos ellos mismos
+- Límite del préstamo de consolidación = total de todos los préstamos pendientes (excluyendo Tala), HASTA UN MÁXIMO DE $15,000 MXN
+- La tasa del préstamo de consolidación está ESPECÍFICAMENTE DISEÑADA para reducir su pago mensual y el costo total de intereses
 - REQUISITO CRÍTICO DE AHORRO: La oferta de consolidación DEBE ahorrarles al menos $100 MXN por semana en costos de interés
 - Para asegurar el ahorro mínimo:
-  1. Calcula el interés semanal total actual: Suma de (cada saldo de préstamo × tasa semanal) para todos los préstamos
+  1. Calcula el interés semanal total actual: Suma de (cada saldo de préstamo × tasa semanal) para préstamos a consolidar
   2. Calcula el nuevo interés semanal: (saldo total de consolidación × tasa semanal promedio ponderada)
   3. Si el ahorro < $100 MXN/semana, ajusta la tasa de consolidación hacia abajo hasta que el ahorro ≥ $100 MXN/semana
-  4. La tasa ajustada se convierte en la tasa de la oferta de consolidación
-- Muéstrales las cuentas: "Tus préstamos actuales promedian X% de interés. Con la consolidación, tienes un solo pago al Y% - ¡eso son Z pesos menos por semana!"
+  4. La tasa ajustada se convierte en la tasa de la oferta de consolidación - esta tasa es INTENCIONALMENTE MÁS BAJA para ahorrarles dinero
+- IMPORTANTE: Enfatiza que esta tasa está diseñada específicamente para reducir sus costos: "Esta tasa de consolidación está diseñada para reducir tu pago mensual y ahorrarte dinero en intereses. Tus préstamos actuales te cuestan $X/mes. Con la consolidación al Y%, pagarás $Z/mes - ¡eso son $W ahorrados cada mes!"
 
 RECOLECCIÓN DE DATOS DEL PRÉSTAMO:
 - Para cada préstamo, recopila TODOS estos detalles:
@@ -1008,15 +1008,17 @@ Perfect! Now I can show you your consolidation offer with all the details.`;
 **Ahora:** **$${formatCurrency(offer.newMonthlyPayment)}/mes**
 **Ahorras:** **$${formatCurrency(offer.monthlySavings)} MXN cada mes** 💰
 
+*Esta tasa está diseñada específicamente para reducir tu pago mensual y el costo total de tus préstamos.*
+
 ${termMonths > 1 ? `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### 📊 **AHORRO TOTAL EN ${termMonths} MESES**
+### 📊 **REDUCCIÓN DEL COSTO TOTAL (INTERESES)**
 
-**Costo actual:** ~~$${formatCurrency(totalCostCurrent)} MXN~~
-**Costo consolidado:** **$${formatCurrency(totalCostNew)} MXN**
-**Ahorras:** **$${formatCurrency(totalCostSavings)} MXN** 🎉
+**Costo total actual (principal + intereses):** ~~$${formatCurrency(totalCostCurrent)} MXN~~
+**Costo total consolidado:** **$${formatCurrency(totalCostNew)} MXN**
+**Ahorras en intereses:** **$${formatCurrency(totalCostSavings)} MXN** 🎉
 
-*¡Eso es como ahorrar $${formatCurrency(offer.monthlySavings)} cada mes!*` : ''}
+*Esta oferta está diseñada para reducir significativamente el costo total de tus préstamos. Ahorras $${formatCurrency(offer.monthlySavings)} cada mes en pagos, y $${formatCurrency(totalCostSavings)} en total durante los ${termMonths} meses.*` : ''}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1032,11 +1034,12 @@ ${availableCredit > 0 ? `• **$${formatCurrency(availableCredit)}** disponible 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### 📋 **Detalles**
+### 📋 **Detalles de tu oferta**
 
-• **Tasa:** ${offer.consolidationRate.toFixed(2)}% semanal
+• **Tasa consolidada:** ${offer.consolidationRate.toFixed(2)}% semanal *(diseñada para reducir tus costos)*
 • **Plazo:** ${termMonths} ${termMonths === 1 ? 'mes' : 'meses'}
-• **Ahorro semanal:** **$${formatCurrency(offer.weeklySavings)} MXN**
+• **Ahorro semanal en intereses:** **$${formatCurrency(offer.weeklySavings)} MXN**
+• **Ahorro mensual en pagos:** **$${formatCurrency(offer.monthlySavings)} MXN**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1066,15 +1069,17 @@ Puedo aumentar tu límite en **20% adicional** ($${formatCurrency(additional20Pe
 **Now:** **$${formatCurrency(offer.newMonthlyPayment)}/month**
 **Save:** **$${formatCurrency(offer.monthlySavings)} MXN each month** 💰
 
+*This rate is specifically designed to reduce your monthly payment and the total cost of your loans.*
+
 ${termMonths > 1 ? `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### 📊 **TOTAL SAVINGS OVER ${termMonths} MONTHS**
+### 📊 **TOTAL COST REDUCTION (INTEREST)**
 
-**Current cost:** ~~$${formatCurrency(totalCostCurrent)} MXN~~
-**Consolidated cost:** **$${formatCurrency(totalCostNew)} MXN**
-**Save:** **$${formatCurrency(totalCostSavings)} MXN** 🎉
+**Current total cost (principal + interest):** ~~$${formatCurrency(totalCostCurrent)} MXN~~
+**Consolidated total cost:** **$${formatCurrency(totalCostNew)} MXN**
+**Save on interest:** **$${formatCurrency(totalCostSavings)} MXN** 🎉
 
-*That's like saving $${formatCurrency(offer.monthlySavings)} every month!*` : ''}
+*This offer is designed to significantly reduce the total cost of your loans. You save $${formatCurrency(offer.monthlySavings)} each month in payments, and $${formatCurrency(totalCostSavings)} total over ${termMonths} months.*` : ''}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1090,11 +1095,12 @@ ${availableCredit > 0 ? `• **$${formatCurrency(availableCredit)}** available t
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### 📋 **Details**
+### 📋 **Your offer details**
 
-• **Rate:** ${offer.consolidationRate.toFixed(2)}% weekly
+• **Consolidated rate:** ${offer.consolidationRate.toFixed(2)}% weekly *(designed to reduce your costs)*
 • **Term:** ${termMonths} ${termMonths === 1 ? 'month' : 'months'}
-• **Weekly savings:** **$${formatCurrency(offer.weeklySavings)} MXN**
+• **Weekly interest savings:** **$${formatCurrency(offer.weeklySavings)} MXN**
+• **Monthly payment savings:** **$${formatCurrency(offer.monthlySavings)} MXN**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
