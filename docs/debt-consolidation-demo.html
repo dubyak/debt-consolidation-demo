@@ -1024,6 +1024,8 @@ ${termMonths > 1 ? `━━━━━━━━━━━━━━━━━━━━
 
 **$${formatCurrency(creditLimit)} MXN**
 
+**Este crédito cubre tus ${offer.loanCount || extractedLoans.length} ${(offer.loanCount || extractedLoans.length) === 1 ? 'préstamo' : 'préstamos'} actuales**
+
 **Desglose:**
 • **$${formatCurrency(debtPayoffAmount)}** disponible para pagar tus deudas
 ${availableCredit > 0 ? `• **$${formatCurrency(availableCredit)}** disponible para usar cuando lo necesites` : ''}
