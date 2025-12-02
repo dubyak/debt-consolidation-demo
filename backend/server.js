@@ -9,17 +9,15 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// Determine public directory path (handle both local and Railway deployments)
+// Serve static files from public directory
 const fs = require('fs');
-let publicDir = path.join(__dirname, 'public');
-if (!fs.existsSync(publicDir)) {
-    // Try alternative path if running from repo root
-    publicDir = path.join(__dirname, 'backend', 'public');
-}
+const publicDir = path.join(__dirname, 'public');
+console.log('__dirname:', __dirname);
 console.log('Public directory:', publicDir);
 console.log('Public dir exists:', fs.existsSync(publicDir));
-
-// Serve static files from public directory
+if (fs.existsSync(publicDir)) {
+    console.log('Files in public dir:', fs.readdirSync(publicDir));
+}
 app.use(express.static(publicDir));
 
 // Health check endpoint
@@ -94,9 +92,17 @@ app.post('/api/chat', async (req, res) => {
 
 // Serve the HTML file at root
 app.get('/', (req, res) => {
-    const htmlPath = path.join(publicDir, 'index.html');
+    const htmlPath = path.join(__dirname, 'public', 'index.html');
     console.log('Serving HTML from:', htmlPath);
     console.log('HTML file exists:', fs.existsSync(htmlPath));
+    if (!fs.existsSync(htmlPath)) {
+        console.error('HTML file not found at:', htmlPath);
+        console.log('Current directory contents:', fs.readdirSync(__dirname));
+        if (fs.existsSync(path.join(__dirname, 'public'))) {
+            console.log('Public directory contents:', fs.readdirSync(path.join(__dirname, 'public')));
+        }
+        return res.status(404).send('HTML file not found. Check logs for details.');
+    }
     res.sendFile(htmlPath, (err) => {
         if (err) {
             console.error('Error serving HTML:', err);
