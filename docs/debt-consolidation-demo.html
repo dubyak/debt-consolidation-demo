@@ -846,6 +846,7 @@ Ready to get started? I just need you to share screenshots of 3 loans you have w
             const newTotal = offerMsg.extraTotal;
             const newMonthlyPayment = newTotal * (offer.consolidationRate / 100) * 4.33;
             
+            // Helper function to format currency consistently (2 decimals)
             const formatCurrency = (amount) => {
                 return parseFloat(amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
             };
