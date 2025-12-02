@@ -238,11 +238,18 @@
         // Configuration - Railway backend URL
         const BACKEND_URL = 'https://debt-consolidation-demo-production.up.railway.app';
         
+        // Demo credentials
+        const DEMO_CREDENTIALS = {
+            username: 'Talajote',
+            password: 'StackWithT@la'
+        };
+        
         // State
         let messages = [];
         let language = 'es';
         let isLoading = false;
         let customerProfile = { ...DEFAULT_PROFILE };
+        let isAuthenticated = false;
 
         // No longer needed - backend handles API keys
         // Keeping for backward compatibility but will be removed
