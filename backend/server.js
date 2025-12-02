@@ -28,7 +28,7 @@ app.get('/health', (req, res) => {
 // Chat endpoint - proxies to OpenAI
 app.post('/api/chat', async (req, res) => {
     try {
-        const { model, max_tokens, system, messages, sessionId, userId } = req.body;
+        const { model, max_tokens, system, messages, sessionId, userId, useStructuredOutput, responseFormat } = req.body;
 
         // Validate request
         if (!messages || !Array.isArray(messages)) {
@@ -49,6 +49,18 @@ app.post('/api/chat', async (req, res) => {
             ...messages
         ];
 
+        // Prepare request body
+        const requestBody = {
+            model: model || 'gpt-4o',
+            max_tokens: max_tokens || 500,
+            messages: openaiMessages
+        };
+
+        // Add structured output if requested
+        if (useStructuredOutput || responseFormat) {
+            requestBody.response_format = responseFormat || { type: 'json_object' };
+        }
+
         // Call OpenAI API
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
@@ -56,11 +68,7 @@ app.post('/api/chat', async (req, res) => {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${apiKey}`
             },
-            body: JSON.stringify({
-                model: model || 'gpt-4o',
-                max_tokens: max_tokens || 500,
-                messages: openaiMessages
-            })
+            body: JSON.stringify(requestBody)
         });
 
         if (!response.ok) {
@@ -74,9 +82,22 @@ app.post('/api/chat', async (req, res) => {
 
         const data = await response.json();
         
+        // Check if response is JSON (structured output)
+        let content = data.choices?.[0]?.message?.content || '';
+        let parsedContent = null;
+        
+        if (useStructuredOutput && content) {
+            try {
+                parsedContent = JSON.parse(content);
+            } catch (e) {
+                console.warn('Failed to parse structured output:', e);
+            }
+        }
+        
         // Normalize response format to match Anthropic format
         const normalizedData = {
-            content: data.choices?.[0]?.message?.content ? [{ text: data.choices[0].message.content }] : [],
+            content: content ? [{ text: content }] : [],
+            parsedContent: parsedContent, // Include parsed JSON if available
             usage: data.usage,
             stop_reason: data.choices?.[0]?.finish_reason
         };

@@ -250,19 +250,111 @@
         let isLoading = false;
         let customerProfile = { ...DEFAULT_PROFILE };
         let isAuthenticated = false;
+        let extractedLoans = []; // Store extracted loan data
+        let pendingLoanConfirmation = null; // Loan waiting for user confirmation
 
         // No longer needed - backend handles API keys
         // Keeping for backward compatibility but will be removed
 
+        // Calculation functions (deterministic, no LLM)
+        function calculateWeightedAverageRate(loans) {
+            if (!loans || loans.length === 0) return 0;
+            let totalWeightedRate = 0;
+            let totalBalance = 0;
+            
+            loans.forEach(loan => {
+                const balance = parseFloat(loan.balance) || 0;
+                const rate = parseFloat(loan.weeklyRate) || 0;
+                totalWeightedRate += balance * rate;
+                totalBalance += balance;
+            });
+            
+            return totalBalance > 0 ? totalWeightedRate / totalBalance : 0;
+        }
+
+        function calculateTotalMonthlyPayment(loans) {
+            return loans.reduce((sum, loan) => {
+                return sum + (parseFloat(loan.monthlyPayment) || 0);
+            }, 0);
+        }
+
+        function calculateWeeklyInterest(balance, weeklyRate) {
+            return (parseFloat(balance) || 0) * (parseFloat(weeklyRate) || 0) / 100;
+        }
+
+        function calculateConsolidationOffer(loans, talaRate, talaLimit) {
+            // Include Tala loan
+            const talaLoan = {
+                lender: 'Tala',
+                balance: customerProfile.currentLimit,
+                weeklyRate: customerProfile.currentRate,
+                monthlyPayment: customerProfile.currentLimit * (customerProfile.currentRate / 100) * 4.33 // Approximate
+            };
+            
+            const allLoans = [talaLoan, ...loans];
+            const totalBalance = Math.min(
+                allLoans.reduce((sum, loan) => sum + (parseFloat(loan.balance) || 0), 0),
+                15000 // Max limit
+            );
+            
+            const weightedRate = calculateWeightedAverageRate(allLoans);
+            
+            // Ensure minimum savings of $100 MXN/week
+            const currentWeeklyInterest = allLoans.reduce((sum, loan) => {
+                return sum + calculateWeeklyInterest(loan.balance, loan.weeklyRate);
+            }, 0);
+            
+            let consolidationWeeklyRate = weightedRate;
+            let newWeeklyInterest = calculateWeeklyInterest(totalBalance, consolidationWeeklyRate);
+            let weeklySavings = currentWeeklyInterest - newWeeklyInterest;
+            
+            // Adjust rate downward if needed to meet minimum savings
+            while (weeklySavings < 100 && consolidationWeeklyRate > 0) {
+                consolidationWeeklyRate -= 0.1;
+                newWeeklyInterest = calculateWeeklyInterest(totalBalance, consolidationWeeklyRate);
+                weeklySavings = currentWeeklyInterest - newWeeklyInterest;
+            }
+            
+            const currentMonthlyPayment = calculateTotalMonthlyPayment(allLoans);
+            const newMonthlyPayment = totalBalance * (consolidationWeeklyRate / 100) * 4.33; // Approximate
+            const monthlySavings = currentMonthlyPayment - newMonthlyPayment;
+            
+            // Calculate debt-free timeline (months)
+            const debtFreeMonths = totalBalance > 0 && newMonthlyPayment > 0 
+                ? Math.ceil(totalBalance / newMonthlyPayment)
+                : 0;
+            
+            return {
+                totalBalance,
+                consolidationRate: consolidationWeeklyRate,
+                currentMonthlyPayment,
+                newMonthlyPayment,
+                monthlySavings,
+                weeklySavings: Math.max(weeklySavings, 100),
+                debtFreeMonths,
+                remainingCredit: Math.max(0, 15000 - totalBalance),
+                loans: allLoans
+            };
+        }
+
         // Build system prompt with customer info
-        function buildSystemPrompt() {
+        function buildSystemPrompt(useStructuredExtraction = false) {
             const lang = language === 'es' ? 'ES' : 'EN';
             const customerInfo = language === 'es'
                 ? `Nombre: ${customerProfile.customerName}, Límite actual en Tala: $${customerProfile.currentLimit.toLocaleString()} MXN, Tasa Tala: ${customerProfile.currentRate}%/semana, Plazo: ${customerProfile.currentTerm} meses`
                 : `Name: ${customerProfile.customerName}, Current Tala limit: $${customerProfile.currentLimit.toLocaleString()} MXN, Tala rate: ${customerProfile.currentRate}%/week, Term: ${customerProfile.currentTerm} months`;
 
-            const basePrompt = language === 'es' ? SYSTEM_PROMPT_ES : SYSTEM_PROMPT_EN;
-            return `${basePrompt}\n\nCUSTOMER PROFILE:\n${customerInfo}\n\nIMPORTANT: Track the conversation flow naturally. When the customer shares loan screenshots, analyze them and extract: lender name, outstanding balance, and interest rate. After collecting 3+ loans, present the consolidation offer with calculations.`;
+            let basePrompt = language === 'es' ? SYSTEM_PROMPT_ES : SYSTEM_PROMPT_EN;
+            
+            if (useStructuredExtraction) {
+                const extractionInstructions = language === 'es'
+                    ? `\n\nEXTRACCIÓN DE DATOS DEL PRÉSTAMO:\nCuando el cliente comparta una captura de préstamo, DEBES responder SOLO con un JSON válido en este formato exacto:\n{\n  "lender": "Nombre del prestamista",\n  "balance": número (saldo pendiente en MXN),\n  "monthlyPayment": número (pago mensual en MXN),\n  "paymentFrequency": "mensual" o "semanal",\n  "weeklyRate": número (tasa semanal como porcentaje, ej: 7.5),\n  "monthlyRate": número (tasa mensual como porcentaje, si está disponible)\n}\n\nNO incluyas texto adicional, solo el JSON.`
+                    : `\n\nLOAN DATA EXTRACTION:\nWhen the customer shares a loan screenshot, you MUST respond ONLY with valid JSON in this exact format:\n{\n  "lender": "Lender name",\n  "balance": number (outstanding balance in MXN),\n  "monthlyPayment": number (monthly payment in MXN),\n  "paymentFrequency": "monthly" or "weekly",\n  "weeklyRate": number (weekly rate as percentage, e.g., 7.5),\n  "monthlyRate": number (monthly rate as percentage, if available)\n}\n\nDo NOT include any additional text, only the JSON.`;
+                
+                basePrompt += extractionInstructions;
+            }
+            
+            return `${basePrompt}\n\nCUSTOMER PROFILE:\n${customerInfo}`;
         }
 
         const SYSTEM_PROMPT_EN = `You are Maya, a friendly loan advisor at Tala. You're warm, supportive, and genuinely want to help customers manage their finances better. Think of yourself as that helpful friend at a neighborhood credit cooperative - approachable, not corporate.
@@ -553,6 +645,29 @@ Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándo
                 // Simple markdown rendering for assistant messages
                 if (msg.role === 'assistant') {
                     textDiv.innerHTML = formatMessage(msg.content);
+                    
+                    // Add confirmation buttons if needed
+                    if (msg.needsConfirmation && pendingLoanConfirmation) {
+                        const buttonDiv = document.createElement('div');
+                        buttonDiv.className = 'flex gap-2 mt-3';
+                        buttonDiv.innerHTML = `
+                            <button class="confirm-loan-btn flex-1 px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg text-sm font-semibold transition-colors">
+                                ${language === 'es' ? '✓ Sí, es correcto' : '✓ Yes, correct'}
+                            </button>
+                            <button class="reject-loan-btn flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-semibold transition-colors">
+                                ${language === 'es' ? '✗ No, corregir' : '✗ No, correct'}
+                            </button>
+                        `;
+                        contentDiv.appendChild(buttonDiv);
+                        
+                        // Add event listeners
+                        buttonDiv.querySelector('.confirm-loan-btn').addEventListener('click', () => {
+                            confirmLoan(pendingLoanConfirmation);
+                        });
+                        buttonDiv.querySelector('.reject-loan-btn').addEventListener('click', () => {
+                            rejectLoan();
+                        });
+                    }
                 } else {
                     textDiv.textContent = msg.content;
                 }
@@ -612,6 +727,76 @@ Ready to get started? I just need you to share screenshots of 3 loans you have w
             renderMessages();
         }
 
+        // Handle loan confirmation
+        function confirmLoan(loanData) {
+            extractedLoans.push(loanData);
+            pendingLoanConfirmation = null;
+            
+            const confirmMsg = language === 'es'
+                ? `¡Perfecto! He registrado tu préstamo con ${loanData.lender}. ${extractedLoans.length < 3 ? '¿Tienes otro préstamo que compartir?' : 'Ahora puedo mostrarte tu oferta de consolidación.'}`
+                : `Perfect! I've recorded your loan with ${loanData.lender}. ${extractedLoans.length < 3 ? 'Do you have another loan to share?' : 'Now I can show you your consolidation offer.'}`;
+            
+            messages.push({ role: 'assistant', content: confirmMsg });
+            
+            // If we have 3+ loans, calculate and show offer
+            if (extractedLoans.length >= 3) {
+                showConsolidationOffer();
+            } else {
+                renderMessages();
+            }
+        }
+
+        function rejectLoan() {
+            pendingLoanConfirmation = null;
+            const rejectMsg = language === 'es'
+                ? 'No hay problema. ¿Puedes compartir la captura de nuevo o decirme los detalles del préstamo?'
+                : 'No problem. Can you share the screenshot again or tell me the loan details?';
+            messages.push({ role: 'assistant', content: rejectMsg });
+            renderMessages();
+        }
+
+        // Show consolidation offer using deterministic calculations
+        function showConsolidationOffer() {
+            const offer = calculateConsolidationOffer(extractedLoans, customerProfile.currentRate, customerProfile.currentLimit);
+            
+            let offerText = language === 'es'
+                ? `**¡Perfecto! Aquí está tu oferta de consolidación:**
+
+**Tus préstamos actuales:**
+${offer.loans.map(loan => `• ${loan.lender}: $${loan.balance.toLocaleString()} MXN, ${loan.weeklyRate}% semanal`).join('\n')}
+
+**Oferta de consolidación:**
+• **Nuevo límite:** $${offer.totalBalance.toLocaleString()} MXN
+• **Tasa consolidada:** ${offer.consolidationRate.toFixed(2)}% semanal
+• **Pago mensual actual:** $${offer.currentMonthlyPayment.toLocaleString()} MXN
+• **Nuevo pago mensual:** $${offer.newMonthlyPayment.toLocaleString()} MXN
+• **Ahorro mensual:** $${offer.monthlySavings.toLocaleString()} MXN
+• **Ahorro semanal:** $${offer.weeklySavings.toFixed(2)} MXN
+• **Sal de deudas en:** ${offer.debtFreeMonths} meses
+${offer.remainingCredit > 0 ? `• **Crédito disponible:** $${offer.remainingCredit.toLocaleString()} MXN` : ''}
+
+¡Estás aprobado! El préstamo de consolidación pagará todos tus otros préstamos directamente.`
+                : `**Perfect! Here's your consolidation offer:**
+
+**Your current loans:**
+${offer.loans.map(loan => `• ${loan.lender}: $${loan.balance.toLocaleString()} MXN, ${loan.weeklyRate}% weekly`).join('\n')}
+
+**Consolidation offer:**
+• **New limit:** $${offer.totalBalance.toLocaleString()} MXN
+• **Consolidated rate:** ${offer.consolidationRate.toFixed(2)}% weekly
+• **Current monthly payment:** $${offer.currentMonthlyPayment.toLocaleString()} MXN
+• **New monthly payment:** $${offer.newMonthlyPayment.toLocaleString()} MXN
+• **Monthly savings:** $${offer.monthlySavings.toLocaleString()} MXN
+• **Weekly savings:** $${offer.weeklySavings.toFixed(2)} MXN
+• **Debt-free in:** ${offer.debtFreeMonths} months
+${offer.remainingCredit > 0 ? `• **Available credit:** $${offer.remainingCredit.toLocaleString()} MXN` : ''}
+
+You're approved! The consolidation loan will pay off all your other loans directly.`;
+            
+            messages.push({ role: 'assistant', content: offerText });
+            renderMessages();
+        }
+
         // Send message (clean - no state management)
         async function sendMessage(userMessage, imageData = null) {
             if (!userMessage.trim() && !imageData) return;
@@ -627,8 +812,11 @@ Ready to get started? I just need you to share screenshots of 3 loans you have w
             isLoading = true;
             renderMessages();
 
+            // Check if this is a loan image - use structured output
+            const isLoanImage = !!imageData;
+            const systemPrompt = buildSystemPrompt(isLoanImage);
+
             // Build messages for backend API
-            const systemPrompt = buildSystemPrompt();
             const apiMessages = messages.map(msg => {
                 if (msg.role === 'user' && msg.image) {
                     // For images, use vision API format
@@ -662,9 +850,10 @@ Ready to get started? I just need you to share screenshots of 3 loans you have w
                     body: JSON.stringify({
                         provider: 'openai',
                         model: 'gpt-4o',
-                        max_tokens: 500,
+                        max_tokens: isLoanImage ? 300 : 500,
                         system: systemPrompt,
                         messages: apiMessages,
+                        useStructuredOutput: isLoanImage,
                         sessionId: `debt-consolidation-${Date.now()}`,
                         userId: customerProfile.customerName
                     })
@@ -678,9 +867,31 @@ Ready to get started? I just need you to share screenshots of 3 loans you have w
 
                 const data = await response.json();
                 console.log('API Response:', data);
-                // Backend returns normalized format: { content: [{ text: "..." }] }
-                const assistantMessage = data.content?.[0]?.text || data.content || 'Error: Invalid response';
-                messages.push({ role: 'assistant', content: assistantMessage });
+                
+                // Handle structured output (loan extraction)
+                if (isLoanImage && data.parsedContent) {
+                    const loanData = data.parsedContent;
+                    // Validate loan data
+                    if (loanData.lender && loanData.balance && loanData.weeklyRate) {
+                        // Convert monthly rate to weekly if needed
+                        if (loanData.monthlyRate && !loanData.weeklyRate) {
+                            loanData.weeklyRate = loanData.monthlyRate / 4.33;
+                        }
+                        // Store for confirmation
+                        pendingLoanConfirmation = loanData;
+                        // Show confirmation message
+                        const confirmText = language === 'es'
+                            ? `Veo que tienes un préstamo con **${loanData.lender}** por **$${parseFloat(loanData.balance).toLocaleString()} MXN** con una tasa de **${loanData.weeklyRate}%** semanal. ¿Es correcto?`
+                            : `I see you have a loan with **${loanData.lender}** for **$${parseFloat(loanData.balance).toLocaleString()} MXN** at **${loanData.weeklyRate}%** weekly rate. Is this correct?`;
+                        messages.push({ role: 'assistant', content: confirmText, needsConfirmation: true });
+                    } else {
+                        throw new Error('Invalid loan data structure');
+                    }
+                } else {
+                    // Regular text response
+                    const assistantMessage = data.content?.[0]?.text || data.content || 'Error: Invalid response';
+                    messages.push({ role: 'assistant', content: assistantMessage });
+                }
             } catch (error) {
                 console.error('Error sending message:', error);
                 console.error('Error details:', error.message);
