@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<!--
+    Debt Consolidation Demo - Clean Chat Agent Version
+    ===================================================
+    
+    This version uses OpenAI API directly with a clean chat interface.
+    The LLM handles the entire flow naturally through conversation.
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tala - Debt Consolidation Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+        }
+        .api-key-input {
+            font-family: monospace;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex flex-col items-center justify-center p-4">
+        <!-- Password Protection Modal -->
+        <div id="passwordModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 flex items-center justify-center mx-auto mb-4">
+                        <span class="text-3xl">🌿</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Tala Demo</h2>
+                    <p class="text-sm text-gray-600">Enter your credentials to access</p>
+                </div>
+                <form id="loginForm" class="space-y-4">
+                    <div>
+                        <label class="text-xs text-gray-500 block mb-1">Username</label>
+                        <input
+                            type="text"
+                            id="usernameInput"
+                            placeholder="Enter username"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            autocomplete="username"
+                        />
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 block mb-1">Password</label>
+                        <input
+                            type="password"
+                            id="passwordInput"
+                            placeholder="Enter password"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            autocomplete="current-password"
+                        />
+                    </div>
+                    <div id="loginError" class="text-red-500 text-xs text-center hidden"></div>
+                    <button
+                        type="submit"
+                        class="w-full px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg font-semibold transition-colors"
+                    >
+                        Access Demo
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Phone Frame -->
+        <div class="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden border-8 border-gray-800 relative">
+            <!-- Status Bar -->
+            <div class="bg-gray-800 text-white px-6 py-2 flex justify-between items-center text-xs">
+                <span>9:41</span>
+                <div class="flex gap-1 items-center">
+                    <div class="w-4 h-2 border border-white rounded-sm relative">
+                        <div class="absolute inset-0.5 bg-white rounded-sm" style="width: 80%;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-teal-500 to-emerald-500 px-4 py-4 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                    <span class="text-xl">🌿</span>
+                </div>
+                <div class="flex-1">
+                    <h1 id="title" class="text-white font-semibold text-lg tracking-tight">Tala</h1>
+                    <p id="subtitle" class="text-teal-100 text-xs">Tu aliado financiero</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button 
+                        id="langToggle"
+                        class="px-2 py-1 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors"
+                    >
+                        EN
+                    </button>
+                    <button 
+                        id="resetBtn"
+                        class="text-white/70 hover:text-white text-xs underline"
+                    >
+                        Reiniciar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Messages Area -->
+            <div id="messagesArea" class="h-96 overflow-y-auto p-4 space-y-3 bg-gray-50">
+                <!-- Messages will be inserted here -->
+            </div>
+
+            <!-- Input Area -->
+            <div class="border-t border-gray-100 bg-white p-3">
+                <form id="messageForm" class="flex gap-2 items-end">
+                    <button
+                        type="button"
+                        id="imageBtn"
+                        class="w-10 h-10 rounded-full bg-teal-100 hover:bg-teal-200 flex items-center justify-center text-teal-600 transition-colors flex-shrink-0"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </button>
+                    <input
+                        type="file"
+                        id="fileInput"
+                        accept="image/*"
+                        class="hidden"
+                    />
+                    <input
+                        type="text"
+                        id="messageInput"
+                        placeholder="Escribe un mensaje..."
+                        class="flex-1 bg-gray-100 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
+                    />
+                    <button
+                        type="submit"
+                        id="sendBtn"
+                        class="w-10 h-10 rounded-full bg-teal-500 hover:bg-teal-600 disabled:bg-gray-300 flex items-center justify-center text-white transition-colors flex-shrink-0"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Settings Panel -->
+        <div class="mt-6 max-w-sm w-full bg-white/90 backdrop-blur rounded-xl p-4 shadow-lg">
+            <h2 id="demoTitle" class="font-bold text-teal-800 mb-3 text-sm">🧪 Configuración</h2>
+            <div class="space-y-3">
+                <div>
+                    <label id="customerLabel" class="text-xs text-gray-500 block mb-1">Nombre del Cliente</label>
+                    <input
+                        type="text"
+                        id="customerNameInput"
+                        class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300"
+                    />
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label id="limitLabel" class="text-xs text-gray-500 block mb-1">Límite Tala (MXN)</label>
+                        <input
+                            type="number"
+                            id="currentLimitInput"
+                            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300"
+                        />
+                    </div>
+                    <div>
+                        <label id="rateLabel" class="text-xs text-gray-500 block mb-1">Tasa (%/semana)</label>
+                        <input
+                            type="number"
+                            step="0.1"
+                            id="currentRateInput"
+                            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300"
+                        />
+                    </div>
+                    <div>
+                        <label id="termLabel" class="text-xs text-gray-500 block mb-1">Plazo (meses)</label>
+                        <input
+                            type="number"
+                            id="currentTermInput"
+                            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300"
+                        />
+                    </div>
+                </div>
+                <button
+                    id="applyRestartBtn"
+                    class="w-full px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white text-xs font-semibold rounded-lg transition-colors"
+                >
+                    Aplicar y Reiniciar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const UI_TEXT = {
+            en: {
+                title: 'Tala',
+                subtitle: 'Your loan buddy',
+                reset: 'Reset',
+                typePlaceholder: 'Type a message...',
+                demoTitle: '🧪 Settings',
+                customer: 'Customer Name',
+                currentLimit: 'Tala Limit (MXN)',
+                currentRate: 'Rate (%/week)',
+                currentTerm: 'Term (months)',
+                langToggle: 'ES',
+                applyRestart: 'Apply & Restart',
+                changeKey: 'Change'
+            },
+            es: {
+                title: 'Tala',
+                subtitle: 'Tu aliado financiero',
+                reset: 'Reiniciar',
+                typePlaceholder: 'Escribe un mensaje...',
+                demoTitle: '🧪 Configuración',
+                customer: 'Nombre del Cliente',
+                currentLimit: 'Límite Tala (MXN)',
+                currentRate: 'Tasa (%/semana)',
+                currentTerm: 'Plazo (meses)',
+                langToggle: 'EN',
+                applyRestart: 'Aplicar y Reiniciar',
+                changeKey: 'Cambiar'
+            }
+        };
+
+        // Customer profile defaults
+        const DEFAULT_PROFILE = {
+            customerName: 'María',
+            currentLimit: 3000,
+            currentRate: 4.5,
+            currentTerm: 1
+        };
+
+        // Configuration - Railway backend URL (use same origin when served from backend)
+        const BACKEND_URL = window.location.origin;
+        
+        // Demo credentials
+        const DEMO_CREDENTIALS = {
+            username: 'Talajote',
+            password: 'StackWithT@la'
+        };
+        
+        // State
+        let messages = [];
+        let language = 'es';
+        let isLoading = false;
+        let customerProfile = { ...DEFAULT_PROFILE };
+        let isAuthenticated = false;
+
+        // No longer needed - backend handles API keys
+        // Keeping for backward compatibility but will be removed
+
+        // Build system prompt with customer info
+        function buildSystemPrompt() {
+            const lang = language === 'es' ? 'ES' : 'EN';
+            const customerInfo = language === 'es'
+                ? `Nombre: ${customerProfile.customerName}, Límite actual en Tala: $${customerProfile.currentLimit.toLocaleString()} MXN, Tasa Tala: ${customerProfile.currentRate}%/semana, Plazo: ${customerProfile.currentTerm} meses`
+                : `Name: ${customerProfile.customerName}, Current Tala limit: $${customerProfile.currentLimit.toLocaleString()} MXN, Tala rate: ${customerProfile.currentRate}%/week, Term: ${customerProfile.currentTerm} months`;
+
+            const basePrompt = language === 'es' ? SYSTEM_PROMPT_ES : SYSTEM_PROMPT_EN;
+            return `${basePrompt}\n\nCUSTOMER PROFILE:\n${customerInfo}\n\nIMPORTANT: Track the conversation flow naturally. When the customer shares loan screenshots, analyze them and extract: lender name, outstanding balance, and interest rate. After collecting 3+ loans, present the consolidation offer with calculations.`;
+        }
+
+        const SYSTEM_PROMPT_EN = `You are Maya, a friendly loan advisor at Tala. You're warm, supportive, and genuinely want to help customers manage their finances better. Think of yourself as that helpful friend at a neighborhood credit cooperative - approachable, not corporate.
+
+CONTEXT:
+- The customer details will be provided (name, current Tala limit, current Tala rate, term)
+- They have completed 5 loans successfully with Tala
+- They have ALREADY OPTED IN to this special opportunity - they're interested and ready to proceed
+- This is a debt consolidation product - ONE loan to replace all their other loans
+
+CONSOLIDATION LOAN LOGIC:
+- We offer ONE consolidation loan that pays off ALL their other loans (including any outstanding Tala balance)
+- The consolidation loan limit = total of all their outstanding loans, UP TO A MAX OF $15,000 MXN
+- The consolidation loan rate = WEIGHTED AVERAGE of all their loan rates (including Tala's rate)
+- This means: if they have expensive loans elsewhere, consolidating brings their blended rate DOWN
+- Show them the math: "Your current loans average X% interest. With consolidation, you get one simple payment at Y% - that's Z pesos saved per week!"
+
+YOUR PERSONALITY:
+- Warm and conversational, like talking to a trusted neighbor
+- Use casual language, contractions, even the occasional emoji when it fits naturally
+- Celebrate their good payment history genuinely
+- Be empathetic about the stress of managing multiple loans
+- Never sound like a bank robot or use corporate jargon
+- Ask one question at a time, keep messages short and digestible
+- Use their name occasionally (but not every message)
+
+FLOW TO FOLLOW (they've already opted in, so skip the pitch):
+1. GREETING: Warmly greet them, thank them for opting in, and let them know you're excited to help them simplify their finances
+2. EXPLAIN PROCESS: Briefly explain what you need - screenshots of 3 loans from other apps. Keep it simple and reassuring.
+3. COLLECTION: Guide them through sharing screenshots one at a time. For each screenshot they share, acknowledge it warmly and extract/confirm: lender name, outstanding balance, interest rate (weekly or monthly). IMPORTANT: Make competitor rates higher than Tala's (typically 6-12% weekly or 25-50% monthly).
+4. SUMMARY & OFFER: After 3+ loans shared, present the consolidation offer in a clear, structured way:
+   - Start with a brief intro: "Perfect! Now let me show you your consolidation offer."
+   - List all loans clearly: Tala + the ones they shared (lender, balance, rate) - use simple formatting, one loan per line
+   - Calculate TOTAL outstanding balance (cap at $15,000 MXN if higher)
+   - Calculate the WEIGHTED AVERAGE rate across all loans - show the math clearly
+   - Present the consolidation offer: ONE loan for the total amount at the blended rate
+   - Emphasize benefits: "Instead of juggling 4 different payments at different rates, you get ONE payment, ONE due date, and a lower blended rate of X%"
+   - Calculate weekly/monthly savings in pesos - make this prominent
+   - Use clear structure: separate sections with line breaks, use bold for key numbers, keep it scannable
+5. APPROVAL: Confirm they're approved! The consolidation loan will pay off their other loans directly. One simple payment going forward.
+
+IMPORTANT BEHAVIORS:
+- When they share an image, analyze it and extract realistic loan details. Use Mexican lender names like: Kueski, Stori, Nu México, Mercado Crédito, Creditea, Dineria, Konfío, Credilikeme, Moneyman, or Cashclick
+- CRITICAL: Competitor rates should be HIGHER than Tala's rate (from customer profile). This makes the weighted average attractive.
+- Keep responses SHORT - 2-3 sentences max usually, EXCEPT for the final summary where you show the full consolidation math
+- When presenting the consolidation offer, use clear structure: separate sections with line breaks, bold key numbers, make it easy to scan
+- Avoid heavy markdown formatting - use simple bold (**text**) and line breaks for structure
+- They already opted in, so don't re-pitch or ask if they're interested - they ARE
+- If they seem hesitant about sharing, be reassuring about privacy/security
+- ALWAYS respond in English
+- Remember: max consolidation limit is $15,000 MXN even if their total debt is higher
+
+CURRENCY: Always use Mexican pesos (MXN) with $ symbol, e.g., $5,000 MXN`;
+
+        const SYSTEM_PROMPT_ES = `Eres Maya, una asesora de préstamos amigable en Tala. Eres cálida, comprensiva y genuinamente quieres ayudar a los clientes a manejar mejor sus finanzas. Piensa en ti misma como esa amiga servicial de una cooperativa de crédito del barrio - accesible, no corporativa.
+
+TU ROL:
+- Ayudar a los clientes a consolidar sus préstamos en un solo pago simple
+- Guiarlos para compartir detalles de préstamos (capturas o texto)
+- Calcular ofertas de consolidación con tasas promedio ponderadas
+- Sé empática sobre el estrés de manejar múltiples préstamos
+
+LÓGICA DEL PRÉSTAMO DE CONSOLIDACIÓN:
+- UN préstamo de consolidación paga TODOS sus otros préstamos (incluyendo cualquier saldo pendiente de Tala)
+- Límite del préstamo de consolidación = total de todos los préstamos pendientes, HASTA UN MÁXIMO DE $15,000 MXN
+- Tasa del préstamo de consolidación = PROMEDIO PONDERADO de todas las tasas (incluyendo la de Tala)
+- Si tienen préstamos caros en otros lados, consolidar baja su tasa combinada
+- Muéstrales las cuentas: "Tus préstamos actuales promedian X% de interés. Con la consolidación, tienes un solo pago al Y% - ¡eso son Z pesos menos por semana!"
+
+TU PERSONALIDAD:
+- Cálida y conversacional, como hablar con un vecino de confianza
+- Usa lenguaje casual, coloquial mexicano natural, emojis ocasionales cuando encajen
+- Celebra genuinamente su buen historial de pagos
+- Nunca suenes como un robot bancario ni uses jerga corporativa
+- Haz una pregunta a la vez, mantén los mensajes cortos (2-3 oraciones usualmente)
+- Usa su nombre ocasionalmente (pero no en cada mensaje)
+- Usa "tú" no "usted" - queremos un tono cercano
+
+FLUJO DE CONVERSACIÓN:
+1. SALUDO: Salúdalos calurosamente, agradéceles por aceptar. Ya aceptaron participar - salta el pitch.
+2. EXPLICAR PROCESO: Explica brevemente que necesitas detalles de 3 préstamos de otras apps. Pueden compartir capturas o decirte los detalles.
+3. RECOLECCIÓN: Guíalos para compartir detalles de préstamos uno por uno. Por cada préstamo:
+   - Si es una captura, analízala y extrae: nombre del prestamista, saldo pendiente, tasa de interés
+   - Si es texto, confirma los detalles con ellos
+   - Reconoce calurosamente y confirma los detalles
+   - IMPORTANTE: Las tasas de competidores deben ser MÁS ALTAS que la de Tala (típicamente 6-12% semanal o 25-50% mensual)
+4. RESUMEN Y OFERTA: Después de 3+ préstamos compartidos, presenta la oferta de consolidación de forma clara y estructurada:
+   - Empieza con una breve intro: "¡Perfecto! Ahora déjame mostrarte tu oferta de consolidación."
+   - Lista todos los préstamos claramente: Tala + los que compartieron (prestamista, saldo, tasa) - usa formato simple, un préstamo por línea
+   - Calcula el saldo TOTAL pendiente (tope en $15,000 MXN si es mayor)
+   - Calcula la tasa PROMEDIO PONDERADO de todos los préstamos - muestra las cuentas claramente
+   - Presenta la oferta de consolidación: UN préstamo por el monto total a la tasa combinada
+   - Enfatiza los beneficios: "En vez de estar batallando con múltiples pagos a diferentes tasas, tienes UN solo pago, UNA fecha de vencimiento, y una tasa combinada más baja del X%"
+   - Calcula el ahorro semanal/mensual en pesos - hazlo prominente
+   - Usa estructura clara: separa secciones con saltos de línea, usa negritas para números clave, mantenlo escaneable
+5. APROBACIÓN: ¡Confirma que están aprobados! El préstamo de consolidación pagará sus otros préstamos directamente.
+
+COMPORTAMIENTOS IMPORTANTES:
+- Cuando compartan una imagen, analízala y extrae detalles realistas del préstamo
+- Usa nombres de prestamistas mexicanos como: Kueski, Stori, Nu México, Mercado Crédito, Creditea, Dineria, Konfío, Credilikeme, Moneyman, o Cashclick
+- CRÍTICO: Las tasas de competidores deben ser MÁS ALTAS que la tasa de Tala para hacer la consolidación atractiva
+- Mantén las respuestas CORTAS - 2-3 oraciones máximo usualmente, EXCEPTO para el resumen final donde muestras todas las cuentas
+- Al presentar la oferta de consolidación, usa estructura clara: separa secciones con saltos de línea, usa negritas para números clave, mantenlo fácil de escanear
+- Evita formato markdown pesado - usa negritas simples (**texto**) y saltos de línea para estructura
+- Ya aceptaron participar, así que no vuelvas a hacer pitch ni preguntes si están interesados
+- Si parecen dudosos, sé tranquilizadora sobre privacidad/seguridad
+- SIEMPRE responde en español mexicano natural
+- Recuerda: el límite máximo de consolidación es $15,000 MXN aunque su deuda total sea mayor
+
+MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN
+
+Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándote en lo que se ha discutido.`;
+
+        // DOM elements
+        const elements = {
+            messagesArea: document.getElementById('messagesArea'),
+            messageInput: document.getElementById('messageInput'),
+            messageForm: document.getElementById('messageForm'),
+            fileInput: document.getElementById('fileInput'),
+            imageBtn: document.getElementById('imageBtn'),
+            sendBtn: document.getElementById('sendBtn'),
+            resetBtn: document.getElementById('resetBtn'),
+            langToggle: document.getElementById('langToggle'),
+            applyRestartBtn: document.getElementById('applyRestartBtn'),
+            customerNameInput: document.getElementById('customerNameInput'),
+            currentLimitInput: document.getElementById('currentLimitInput'),
+            currentRateInput: document.getElementById('currentRateInput'),
+            currentTermInput: document.getElementById('currentTermInput'),
+            title: document.getElementById('title'),
+            subtitle: document.getElementById('subtitle'),
+            demoTitle: document.getElementById('demoTitle'),
+            customerLabel: document.getElementById('customerLabel'),
+            limitLabel: document.getElementById('limitLabel'),
+            rateLabel: document.getElementById('rateLabel'),
+            termLabel: document.getElementById('termLabel')
+        };
+
+        // Initialize form values
+        elements.customerNameInput.value = customerProfile.customerName;
+        elements.currentLimitInput.value = customerProfile.currentLimit;
+        elements.currentRateInput.value = customerProfile.currentRate;
+        elements.currentTermInput.value = customerProfile.currentTerm;
+
+        // Check authentication
+        checkAuthentication();
+
+        // Format message text with simple markdown support
+        function formatMessage(text) {
+            if (!text) return '';
+            
+            // Escape HTML first
+            let html = text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            
+            // Headers (### Header -> <strong>Header</strong>)
+            html = html.replace(/###\s+(.+)/g, '<div class="font-bold text-base mt-2 mb-1">$1</div>');
+            html = html.replace(/##\s+(.+)/g, '<div class="font-bold text-base mt-2 mb-1">$1</div>');
+            html = html.replace(/#\s+(.+)/g, '<div class="font-bold text-base mt-2 mb-1">$1</div>');
+            
+            // Bold (**text** or __text__)
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold">$1</strong>');
+            html = html.replace(/__(.+?)__/g, '<strong class="font-semibold">$1</strong>');
+            
+            // Bullet lists (- item)
+            html = html.replace(/^-\s+(.+)$/gm, '<div class="ml-2 mb-1">• $1</div>');
+            
+            // Numbered lists (1. item)
+            html = html.replace(/^\d+\.\s+(.+)$/gm, '<div class="ml-2 mb-1">$1</div>');
+            
+            // Line breaks
+            html = html.replace(/\n/g, '<br>');
+            
+            return html;
+        }
+
+        // Update UI text based on language
+        function updateUIText() {
+            const t = UI_TEXT[language];
+            elements.title.textContent = t.title;
+            elements.subtitle.textContent = t.subtitle;
+            elements.resetBtn.textContent = t.reset;
+            elements.messageInput.placeholder = t.typePlaceholder;
+            elements.demoTitle.textContent = t.demoTitle;
+            elements.customerLabel.textContent = t.customer;
+            elements.limitLabel.textContent = t.currentLimit;
+            elements.rateLabel.textContent = t.currentRate;
+            elements.termLabel.textContent = t.currentTerm;
+            elements.langToggle.textContent = t.langToggle;
+            elements.applyRestartBtn.textContent = t.applyRestart;
+        }
+
+        // Render messages
+        function renderMessages() {
+            elements.messagesArea.innerHTML = '';
+            
+            messages.forEach((msg) => {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = `flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`;
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = `max-w-xs ${msg.role === 'user' ? 'order-2' : ''}`;
+                
+                if (msg.image) {
+                    const imgDiv = document.createElement('div');
+                    imgDiv.className = 'mb-2 rounded-xl overflow-hidden border-2 border-teal-200 bg-gray-100';
+                    const img = document.createElement('img');
+                    img.src = msg.image;
+                    img.alt = 'Uploaded loan screenshot';
+                    img.className = 'w-full max-w-xs object-contain';
+                    img.style.maxHeight = '400px';
+                    imgDiv.appendChild(img);
+                    contentDiv.appendChild(imgDiv);
+                }
+                
+                const textDiv = document.createElement('div');
+                textDiv.className = `px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                    msg.role === 'user' 
+                        ? 'bg-teal-500 text-white rounded-br-md' 
+                        : 'bg-white text-gray-700 rounded-bl-md shadow-sm border border-gray-100'
+                }`;
+                
+                // Simple markdown rendering for assistant messages
+                if (msg.role === 'assistant') {
+                    textDiv.innerHTML = formatMessage(msg.content);
+                } else {
+                    textDiv.textContent = msg.content;
+                }
+                
+                contentDiv.appendChild(textDiv);
+                
+                msgDiv.appendChild(contentDiv);
+                elements.messagesArea.appendChild(msgDiv);
+            });
+            
+            if (isLoading) {
+                const loadingDiv = document.createElement('div');
+                loadingDiv.className = 'flex justify-start';
+                loadingDiv.innerHTML = `
+                    <div class="bg-white px-4 py-3 rounded-2xl rounded-bl-md shadow-sm border border-gray-100">
+                        <div class="flex gap-1">
+                            <div class="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
+                            <div class="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
+                            <div class="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
+                        </div>
+                    </div>
+                `;
+                elements.messagesArea.appendChild(loadingDiv);
+            }
+            
+            elements.messagesArea.scrollTop = elements.messagesArea.scrollHeight;
+        }
+
+        // Welcome messages
+        function getWelcomeMessage() {
+            const name = customerProfile.customerName;
+            if (language === 'es') {
+                return `¡Hola ${name}! 👋 Qué gusto que aceptaste esta oportunidad. Soy Maya de Tala, y estoy aquí para ayudarte a consolidar todos tus préstamos en uno solo.
+
+En los próximos minutos, vamos a revisar tus préstamos de otras apps y te voy a mostrar cómo puedes simplificar todo en un solo pago, con una tasa más baja y menos estrés.
+
+¿Lista para empezar? Solo necesito que compartas capturas de 3 préstamos que tengas con otras apps.`;
+            } else {
+                return `Hey ${name}! 👋 So glad you opted in for this opportunity. I'm Maya from Tala, and I'm here to help you consolidate all your loans into one.
+
+Over the next few minutes, we'll review your loans from other apps and I'll show you how you can simplify everything into one payment, with a lower rate and less stress.
+
+Ready to get started? I just need you to share screenshots of 3 loans you have with other apps.`;
+            }
+        }
+
+        // Start conversation
+        async function startConversation() {
+            isLoading = true;
+            renderMessages();
+
+            // Use hardcoded welcome message
+            const welcomeMessage = getWelcomeMessage();
+
+            messages = [{ role: 'assistant', content: welcomeMessage }];
+            isLoading = false;
+            renderMessages();
+        }
+
+        // Send message (clean - no state management)
+        async function sendMessage(userMessage, imageData = null) {
+            if (!userMessage.trim() && !imageData) return;
+
+            // Add user message
+            const userMsg = { 
+                role: 'user', 
+                content: userMessage || (imageData ? (language === 'es' ? 'Aquí está mi captura del préstamo' : 'Here\'s my loan screenshot') : ''),
+                image: imageData 
+            };
+            messages.push(userMsg);
+            elements.messageInput.value = '';
+            isLoading = true;
+            renderMessages();
+
+            // Build messages for backend API
+            const systemPrompt = buildSystemPrompt();
+            const apiMessages = messages.map(msg => {
+                if (msg.role === 'user' && msg.image) {
+                    // For images, use vision API format
+                    return {
+                        role: 'user',
+                        content: [
+                            {
+                                type: 'text',
+                                text: msg.content || (language === 'es' 
+                                    ? 'Estoy compartiendo una captura de un préstamo. Por favor analízala y extrae el nombre del prestamista, saldo pendiente y tasa de interés.'
+                                    : 'I\'m sharing a loan screenshot. Please analyze it and extract the lender name, outstanding balance, and interest rate.')
+                            },
+                            {
+                                type: 'image_url',
+                                image_url: {
+                                    url: msg.image
+                                }
+                            }
+                        ]
+                    };
+                }
+                return { role: msg.role, content: msg.content };
+            });
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        provider: 'openai',
+                        model: 'gpt-4o',
+                        max_tokens: 500,
+                        system: systemPrompt,
+                        messages: apiMessages,
+                        sessionId: `debt-consolidation-${Date.now()}`,
+                        userId: customerProfile.customerName
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'API request failed');
+                }
+
+                const data = await response.json();
+                // Backend returns normalized format: { content: [{ text: "..." }] }
+                const assistantMessage = data.content?.[0]?.text || data.content || 'Error: Invalid response';
+                messages.push({ role: 'assistant', content: assistantMessage });
+            } catch (error) {
+                console.error('Error sending message:', error);
+                const errorMsg = language === 'es' 
+                    ? '¡Ups, perdón por eso! Tuve un pequeño problema. ¿Puedes intentar de nuevo?'
+                    : 'Oops, sorry about that! Had a little hiccup on my end. Mind trying again?';
+                messages.push({ role: 'assistant', content: errorMsg });
+            }
+            
+            isLoading = false;
+            renderMessages();
+        }
+
+        // Authentication functions
+        function checkAuthentication() {
+            const stored = sessionStorage.getItem('demo_authenticated');
+            if (stored === 'true') {
+                isAuthenticated = true;
+                document.getElementById('passwordModal').classList.add('hidden');
+                startConversation();
+            } else {
+                document.getElementById('passwordModal').classList.remove('hidden');
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('usernameInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+            const errorDiv = document.getElementById('loginError');
+
+            if (username === DEMO_CREDENTIALS.username && password === DEMO_CREDENTIALS.password) {
+                isAuthenticated = true;
+                sessionStorage.setItem('demo_authenticated', 'true');
+                document.getElementById('passwordModal').classList.add('hidden');
+                startConversation();
+            } else {
+                errorDiv.textContent = 'Invalid username or password';
+                errorDiv.classList.remove('hidden');
+                document.getElementById('passwordInput').value = '';
+            }
+        }
+
+        // Event listeners
+        document.getElementById('loginForm').addEventListener('submit', handleLogin);
+
+        elements.messageForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            sendMessage(elements.messageInput.value);
+        });
+
+        elements.imageBtn.addEventListener('click', () => {
+            elements.fileInput.click();
+        });
+
+        elements.fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const imageData = event.target.result;
+                    const defaultMsg = language === 'es' ? 'Aquí está mi captura del préstamo' : "Here's my loan screenshot";
+                    sendMessage(elements.messageInput.value || defaultMsg, imageData);
+                    elements.messageInput.value = '';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        elements.resetBtn.addEventListener('click', () => {
+            messages = [];
+            startConversation();
+        });
+
+        elements.langToggle.addEventListener('click', () => {
+            language = language === 'es' ? 'en' : 'es';
+            messages = [];
+            updateUIText();
+            startConversation();
+        });
+
+        elements.applyRestartBtn.addEventListener('click', () => {
+            customerProfile = {
+                customerName: elements.customerNameInput.value,
+                currentLimit: Number(elements.currentLimitInput.value),
+                currentRate: Number(elements.currentRateInput.value),
+                currentTerm: Number(elements.currentTermInput.value)
+            };
+            messages = [];
+            startConversation();
+        });
+
+        // API key input no longer needed
+
+        // Initialize
+        updateUIText();
+        // Conversation will start automatically if API key exists (handled above)
+    </script>
+</body>
+</html>
