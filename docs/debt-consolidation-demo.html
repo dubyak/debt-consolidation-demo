@@ -425,25 +425,15 @@ FLOW TO FOLLOW (they've already opted in, so skip the pitch):
    - Extract: lender name, outstanding balance, monthly payment amount, payment frequency, interest rate
    - Confirm these details with them
    - IMPORTANT: Make competitor rates higher than Tala's (typically 6-12% weekly or 25-50% monthly)
-4. LOAN SELECTION: After collecting all loans, show them the list and ask which ones they want to consolidate (they can select all or specific ones)
-5. SUMMARY & OFFER: Present the consolidation offer in a clear, structured way:
-   - Start with a brief intro: "Perfect! Now let me show you your consolidation offer."
-   - Show individual loans with: lender name, balance, monthly payment, interest rate (only include selected loans)
-   - Calculate CURRENT TOTAL MONTHLY PAYMENT: Sum of all monthly payments from selected loans
-   - Calculate TOTAL outstanding balance (cap at $15,000 MXN if higher)
-   - Calculate the WEIGHTED AVERAGE rate across selected loans
-   - ENSURE MINIMUM SAVINGS: Calculate current weekly interest vs new weekly interest. If savings < $100 MXN/week, adjust consolidation rate downward until savings ≥ $100 MXN/week
-   - Calculate NEW MONTHLY PAYMENT based on consolidation loan terms
-   - Show side-by-side comparison prominently:
-     * "Pago mensual actual: $X" → "NUEVO MONTO: $Y"
-     * "Ahorro mensual: $Z" (make this prominent)
-     * "Ahorro semanal: $W" (must be ≥ $100 MXN)
-   - Calculate DEBT-FREE TIMELINE: "SAL DE DEUDAS EN X MESES" based on new monthly payment
-   - Show NEW LIMIT prominently: "Tu nuevo límite: $X,XXX" (consolidation loan amount, up to $15,000)
-   - Calculate REMAINING CREDIT AVAILABLE: "Línea de crédito aún disponible: $X,XXX" (if new limit > total debt)
-   - Emphasize benefits: "Instead of juggling multiple payments at different rates, you get ONE payment, ONE due date, and save at least $100 pesos per week!"
-   - Use clear structure: separate sections with line breaks, use bold for key numbers, keep it scannable
-6. APPROVAL: Confirm they're approved! The consolidation loan will pay off their other loans directly. One simple payment going forward.
+4. LOAN SELECTION: After collecting all loans, the system will automatically show a review screen. DO NOT try to calculate or show the offer yourself - the system handles this automatically.
+5. SUMMARY & OFFER: CRITICAL - DO NOT calculate consolidation offers yourself. When 3+ loans are collected:
+   - The system will automatically show a review screen with all loans
+   - The system will automatically calculate and display the consolidation offer using deterministic calculations
+   - You should NOT attempt to calculate rates, payments, or savings yourself
+   - Simply acknowledge: "Perfect! I've collected all your loans. Let me show you your consolidation offer." and let the system display it
+   - DO NOT say things like "Dame un momento para calcular" or "Te comparto pronto" - the offer appears automatically
+   - DO NOT show placeholder calculations like "(ajustando para el ahorro necesario)" - wait for the system to show the actual offer
+6. APPROVAL: After the system shows the offer, confirm they're approved and answer any questions they have.
 
 IMPORTANT BEHAVIORS:
 - When they share an image, analyze it and extract realistic loan details. Use Mexican lender names like: Kueski, Stori, Nu México, Mercado Crédito, Creditea, Dineria, Konfío, Credilikeme, Moneyman, or Cashclick
@@ -511,25 +501,15 @@ FLUJO DE CONVERSACIÓN:
    - Si es texto, confirma los detalles con ellos
    - Reconoce calurosamente y confirma los detalles
    - IMPORTANTE: Las tasas de competidores deben ser MÁS ALTAS que la de Tala (típicamente 6-12% semanal o 25-50% mensual)
-4. SELECCIÓN DE PRÉSTAMOS: Después de recopilar todos los préstamos, muéstrales la lista y pregunta cuáles quieren consolidar (pueden seleccionar todos o específicos)
-5. RESUMEN Y OFERTA: Después de seleccionar préstamos, presenta la oferta de consolidación de forma clara y estructurada:
-   - Empieza con una breve intro: "¡Perfecto! Ahora déjame mostrarte tu oferta de consolidación."
-   - Muestra préstamos individuales con: prestamista, saldo, pago mensual, tasa de interés (solo incluye préstamos seleccionados)
-   - Calcula PAGO MENSUAL TOTAL ACTUAL: Suma de todos los pagos mensuales de préstamos seleccionados
-   - Calcula el saldo TOTAL pendiente (tope en $15,000 MXN si es mayor)
-   - Calcula la tasa PROMEDIO PONDERADO de préstamos seleccionados
-   - ASEGURA AHORRO MÍNIMO: Calcula interés semanal actual vs nuevo interés semanal. Si el ahorro < $100 MXN/semana, ajusta la tasa de consolidación hacia abajo hasta que el ahorro ≥ $100 MXN/semana
-   - Calcula NUEVO PAGO MENSUAL basado en términos del préstamo de consolidación
-   - Muestra comparación lado a lado prominentemente:
-     * "Pago mensual actual: $X" → "NUEVO MONTO: $Y"
-     * "Ahorro mensual: $Z" (hazlo prominente)
-     * "Ahorro semanal: $W" (debe ser ≥ $100 MXN)
-   - Calcula TIEMPO LIBRE DE DEUDAS: "SAL DE DEUDAS EN X MESES" basado en nuevo pago mensual
-   - Muestra NUEVO LÍMITE prominentemente: "Tu nuevo límite: $X,XXX" (monto del préstamo de consolidación, hasta $15,000)
-   - Calcula CRÉDITO DISPONIBLE RESTANTE: "Línea de crédito aún disponible: $X,XXX" (si nuevo límite > deuda total)
-   - Enfatiza beneficios: "En vez de estar batallando con múltiples pagos a diferentes tasas, tienes UN solo pago, UNA fecha de vencimiento, y ahorras al menos $100 pesos por semana!"
-   - Usa estructura clara: separa secciones con saltos de línea, usa negritas para números clave, mantenlo escaneable
-6. APROBACIÓN: ¡Confirma que están aprobados! El préstamo de consolidación pagará sus otros préstamos directamente.
+4. SELECCIÓN DE PRÉSTAMOS: Después de recopilar todos los préstamos, el sistema mostrará automáticamente una pantalla de revisión. NO intentes calcular o mostrar la oferta tú misma - el sistema maneja esto automáticamente.
+5. RESUMEN Y OFERTA: CRÍTICO - NO calcules ofertas de consolidación tú misma. Cuando se recopilen 3+ préstamos:
+   - El sistema mostrará automáticamente una pantalla de revisión con todos los préstamos
+   - El sistema calculará y mostrará automáticamente la oferta de consolidación usando cálculos determinísticos
+   - NO debes intentar calcular tasas, pagos o ahorros tú misma
+   - Simplemente reconoce: "¡Perfecto! He recopilado todos tus préstamos. Déjame mostrarte tu oferta de consolidación." y deja que el sistema la muestre
+   - NO digas cosas como "Dame un momento para calcular" o "Te comparto pronto" - la oferta aparece automáticamente
+   - NO muestres cálculos con placeholders como "(ajustando para el ahorro necesario)" - espera a que el sistema muestre la oferta real
+6. APROBACIÓN: Después de que el sistema muestre la oferta, confirma que están aprobados y responde cualquier pregunta que tengan.
 
 COMPORTAMIENTOS IMPORTANTES:
 - Cuando compartan una imagen, analízala y extrae detalles realistas del préstamo
@@ -905,7 +885,7 @@ ${extractedLoans.map((loan, idx) => `${idx + 1}. **${loan.lender}**: $${parseFlo
 • Pago mensual total: **$${totalMonthlyPayment.toLocaleString()}/mes**
 • Deuda total: **$${totalBalance.toLocaleString()}**
 
-¿Quieres ver tu oferta de consolidación?`
+¡Perfecto! Ahora puedo mostrarte tu oferta de consolidación con todos los detalles.`
                 : `**Review your loans**
 
 I've collected information about your loans. Here's the summary:
@@ -916,10 +896,15 @@ ${extractedLoans.map((loan, idx) => `${idx + 1}. **${loan.lender}**: $${parseFlo
 • Total monthly payment: **$${totalMonthlyPayment.toLocaleString()}/month**
 • Total debt: **$${totalBalance.toLocaleString()}**
 
-Would you like to see your consolidation offer?`;
+Perfect! Now I can show you your consolidation offer with all the details.`;
             
             messages.push({ role: 'assistant', content: reviewText, showOfferButton: true });
             renderMessages();
+            
+            // Automatically show offer after a brief moment
+            setTimeout(() => {
+                showConsolidationOffer();
+            }, 1500);
         }
 
         // Show consolidation offer using deterministic calculations
