@@ -38,6 +38,8 @@ app.post('/api/chat', async (req, res) => {
         // Check for API key
         const apiKey = process.env.OPENAI_API_KEY;
         if (!apiKey) {
+            console.error('OPENAI_API_KEY not found in environment variables');
+            console.log('Available env vars:', Object.keys(process.env).filter(k => k.includes('OPENAI') || k.includes('API')));
             return res.status(500).json({ error: 'Server configuration error: OPENAI_API_KEY not set' });
         }
 
