@@ -979,16 +979,16 @@ Perfect! Now I can show you your consolidation offer with all the details.`;
                 console.warn('Warning: Offer does not provide savings. Monthly:', offer.monthlySavings, 'Weekly:', offer.weeklySavings);
             }
             
+            // Helper function to format currency consistently (2 decimals)
+            const formatCurrency = (amount) => {
+                return parseFloat(amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            };
+            
             // Calculate total cost comparison (principal + interest over term)
             const termMonths = customerProfile.currentTerm || 1;
             const totalCostCurrent = offer.currentMonthlyPayment * termMonths;
             const totalCostNew = offer.newMonthlyPayment * termMonths;
             const totalCostSavings = totalCostCurrent - totalCostNew;
-            
-            // Helper function to format currency consistently (2 decimals)
-            const formatCurrency = (amount) => {
-                return parseFloat(amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-            };
             
             // Calculate breakdown - clarify credit limit vs debt payoff
             // Don't include Tala loan - only consolidate other loans
