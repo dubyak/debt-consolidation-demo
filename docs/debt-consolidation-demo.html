@@ -1197,10 +1197,17 @@ Would you like to add this extra $${formatCurrency(additional20Percent)} MXN?`;
                 // Handle structured output (loan extraction)
                 if (isLoanImage && data.parsedContent) {
                     const loanData = data.parsedContent;
-                    // Validate loan data
-                    if (loanData.lender && loanData.balance && loanData.weeklyRate) {
-                        // Convert monthly rate to weekly if needed
-                        if (loanData.monthlyRate && !loanData.weeklyRate) {
+                    console.log('Parsed loan data:', loanData);
+                    
+                    // Convert monthly rate to weekly if needed (do this first)
+                    if (loanData.monthlyRate && !loanData.weeklyRate) {
+                        loanData.weeklyRate = loanData.monthlyRate / 4.33;
+                    }
+                    
+                    // Validate loan data - check for lender, balance, and either weeklyRate or monthlyRate
+                    if (loanData.lender && loanData.balance && (loanData.weeklyRate || loanData.monthlyRate)) {
+                        // Ensure weeklyRate exists (convert if needed)
+                        if (!loanData.weeklyRate && loanData.monthlyRate) {
                             loanData.weeklyRate = loanData.monthlyRate / 4.33;
                         }
                         // Store for confirmation
@@ -1223,7 +1230,9 @@ Would you like to add this extra $${formatCurrency(additional20Percent)} MXN?`;
                             : `I see you have a loan with **${loanData.lender}** for **$${parseFloat(loanData.balance).toLocaleString()} MXN** at an interest rate of **${rateDisplay}**. Is this correct?`;
                         messages.push({ role: 'assistant', content: confirmText, needsConfirmation: true });
                     } else {
-                        throw new Error('Invalid loan data structure');
+                        console.error('Invalid loan data structure:', loanData);
+                        console.error('Missing fields - lender:', !!loanData.lender, 'balance:', !!loanData.balance, 'weeklyRate:', !!loanData.weeklyRate, 'monthlyRate:', !!loanData.monthlyRate);
+                        throw new Error(`Invalid loan data structure. Received: ${JSON.stringify(loanData)}`);
                     }
                 } else {
                     // Regular text response
