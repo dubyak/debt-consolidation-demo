@@ -381,7 +381,7 @@ CONTEXT:
 - This is a debt consolidation product - ONE loan to replace all their other loans
 
 CONSOLIDATION LOAN LOGIC:
-- We offer ONE consolidation loan that pays off ALL their other loans (including any outstanding Tala balance)
+- We offer ONE consolidation loan that gives them credit to pay off their other loans themselves (including any outstanding Tala balance)
 - The consolidation loan limit = total of all their outstanding loans, UP TO A MAX OF $15,000 MXN
 - The consolidation loan rate = WEIGHTED AVERAGE of all their loan rates (including Tala's rate)
 - CRITICAL SAVINGS REQUIREMENT: The consolidation offer MUST save them at least $100 MXN per week in interest costs
@@ -457,7 +457,7 @@ TU ROL:
 - Sé empática sobre el estrés de manejar múltiples préstamos
 
 LÓGICA DEL PRÉSTAMO DE CONSOLIDACIÓN:
-- UN préstamo de consolidación paga TODOS sus otros préstamos (incluyendo cualquier saldo pendiente de Tala)
+- UN préstamo de consolidación les da crédito para que paguen TODOS sus otros préstamos ellos mismos (incluyendo cualquier saldo pendiente de Tala)
 - Límite del préstamo de consolidación = total de todos los préstamos pendientes, HASTA UN MÁXIMO DE $15,000 MXN
 - Tasa del préstamo de consolidación = PROMEDIO PONDERADO de todas las tasas (incluyendo la de Tala)
 - REQUISITO CRÍTICO DE AHORRO: La oferta de consolidación DEBE ahorrarles al menos $100 MXN por semana en costos de interés
@@ -886,7 +886,7 @@ Ready to get started? I just need you to share screenshots of 3 loans you have w
 **$${formatCurrency(newTotal)} MXN**
 
 **Breakdown:**
-• **$${formatCurrency(debtPayoff)}** to consolidate your debts
+• **$${formatCurrency(debtPayoff)}** available to consolidate your debts
 • **$${formatCurrency(extraAmount)}** extra for your expenses
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1028,7 +1028,7 @@ ${availableCredit > 0 ? `• **$${formatCurrency(availableCredit)}** disponible 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✅ **¡Estás aprobado!** El préstamo pagará todos tus otros préstamos directamente.
+✅ **¡Estás aprobado!** Usa este crédito para pagar tus otros préstamos y simplifica todo en un solo pago.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1069,7 +1069,7 @@ ${termMonths > 1 ? `━━━━━━━━━━━━━━━━━━━━
 **$${formatCurrency(creditLimit)} MXN**
 
 **Breakdown:**
-• **$${formatCurrency(debtPayoffAmount)}** to payoff your debt now
+• **$${formatCurrency(debtPayoffAmount)}** available to payoff your debt
 ${availableCredit > 0 ? `• **$${formatCurrency(availableCredit)}** available to borrow whenever you need` : ''}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1082,7 +1082,7 @@ ${availableCredit > 0 ? `• **$${formatCurrency(availableCredit)}** available t
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✅ **You're approved!** The loan will pay off all your other loans directly.
+✅ **You're approved!** Use this credit to pay off your other loans and simplify everything into one payment.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
