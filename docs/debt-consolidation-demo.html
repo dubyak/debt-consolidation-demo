@@ -1212,8 +1212,8 @@ Would you like to add this extra $${formatCurrency(additional20Percent)} MXN to 
                         : 'Connection error. Please check your internet connection.';
                 } else {
                     errorMsg = language === 'es' 
-                        ? '¡Ups, perdón por eso! Tuve un pequeño problema. ¿Puedes intentar de nuevo?'
-                        : 'Oops, sorry about that! Had a little hiccup on my end. Mind trying again?';
+                        ? `¡Ups, perdón por eso! Tuve un pequeño problema: ${error.message}. ¿Puedes intentar de nuevo?`
+                        : `Oops, sorry about that! Had a little hiccup: ${error.message}. Mind trying again?`;
                 }
                 messages.push({ role: 'assistant', content: errorMsg });
             }
