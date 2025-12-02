@@ -974,6 +974,11 @@ Perfect! Now I can show you your consolidation offer with all the details.`;
             updateProgress(4, 4);
             const offer = calculateConsolidationOffer(extractedLoans, customerProfile.currentRate, customerProfile.currentLimit);
             
+            // Verify that the offer actually reduces costs
+            if (offer.monthlySavings <= 0 || offer.weeklySavings <= 0) {
+                console.warn('Warning: Offer does not provide savings. Monthly:', offer.monthlySavings, 'Weekly:', offer.weeklySavings);
+            }
+            
             // Calculate total cost comparison (principal + interest over term)
             const termMonths = customerProfile.currentTerm || 1;
             const totalCostCurrent = offer.currentMonthlyPayment * termMonths;
