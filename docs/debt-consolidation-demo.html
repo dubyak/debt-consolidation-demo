@@ -838,24 +838,38 @@ Ready to get started? I just need you to share screenshots of 3 loans you have w
             const confirmText = language === 'es'
                 ? `¡Perfecto! He actualizado tu oferta:
 
-**Nuevo límite total:** $${newTotal.toLocaleString()} MXN
-• $${Math.min(offer.totalBalance, 15000).toLocaleString()} para pagar tus deudas
-• $${extraAmount.toLocaleString()} adicionales para tus otras necesidades
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### 💰 Nuevo límite total
+**$${newTotal.toLocaleString()} MXN**
+
+**Desglose:**
+• $${Math.min(offer.totalBalance, 15000).toLocaleString()} para consolidar tus deudas
+• $${extraAmount.toLocaleString()} adicionales para tus gastos
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 **Nuevo pago mensual:** $${newMonthlyPayment.toFixed(2)} MXN
 **Tasa:** ${offer.consolidationRate.toFixed(2)}% semanal (sin cambios)
 
-¡Excelente decisión! Ahora tienes todo lo que necesitas en un solo lugar, sin tener que buscar con otros prestamistas.`
+¡Excelente decisión! Ahora tienes más flexibilidad para cubrir cualquier gasto que surja sin tener que ir con otros prestamistas. 🎉`
                 : `Perfect! I've updated your offer:
 
-**New total limit:** $${newTotal.toLocaleString()} MXN
-• $${Math.min(offer.totalBalance, 15000).toLocaleString()} to payoff your debts
-• $${extraAmount.toLocaleString()} extra for your other needs
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### 💰 New total limit
+**$${newTotal.toLocaleString()} MXN**
+
+**Breakdown:**
+• $${Math.min(offer.totalBalance, 15000).toLocaleString()} to consolidate your debts
+• $${extraAmount.toLocaleString()} extra for your expenses
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 **New monthly payment:** $${newMonthlyPayment.toFixed(2)} MXN
-**Rate:** ${offer.consolidationRate.toFixed(2)}% weekly (unchanged)
+**Rate:** ${offer.consolidationRate.toFixed(2)}% weekly (no change)
 
-Great decision! Now you have everything you need in one place, without having to look elsewhere.`;
+Great decision! Now you have more flexibility to cover any expenses that come up without needing to go to other lenders. 🎉`;
             
             messages.push({ role: 'assistant', content: confirmText });
             renderMessages();
