@@ -35,8 +35,8 @@ app.post('/api/chat', async (req, res) => {
             return res.status(400).json({ error: 'Invalid request: messages array required' });
         }
 
-        // Check for API key
-        const apiKey = process.env.OPENAI_API_KEY;
+        // Check for API key (try both naming conventions)
+        const apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_APIKEY;
         if (!apiKey) {
             console.error('OPENAI_API_KEY not found in environment variables');
             console.log('Available env vars:', Object.keys(process.env).filter(k => k.includes('OPENAI') || k.includes('API')));
