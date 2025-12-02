@@ -590,11 +590,11 @@ Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándo
             // Numbered lists (1. item)
             html = html.replace(/^\d+\.\s+(.+)$/gm, '<div class="ml-2 mb-1">$1</div>');
             
+            // Replace separator lines with CSS borders to prevent overflow (before line breaks)
+            html = html.replace(/━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━/g, '<div class="border-t border-gray-300 my-2 w-full"></div>');
+            
             // Line breaks
             html = html.replace(/\n/g, '<br>');
-            
-            // Replace separator lines with CSS borders to prevent overflow
-            html = html.replace(/━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━/g, '<div class="border-t border-gray-300 my-2"></div>');
             
             return html;
         }
