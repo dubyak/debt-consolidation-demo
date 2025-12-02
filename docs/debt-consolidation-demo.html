@@ -986,8 +986,9 @@ Perfect! Now I can show you your consolidation offer with all the details.`;
             };
             
             // Calculate breakdown - clarify credit limit vs debt payoff
-            const totalDebt = extractedLoans.reduce((sum, loan) => sum + (parseFloat(loan.balance) || 0), 0) + customerProfile.currentLimit;
-            const debtPayoffAmount = Math.min(totalDebt, 15000); // Actual debt to pay off
+            // Don't include Tala loan - only consolidate other loans
+            const totalDebt = extractedLoans.reduce((sum, loan) => sum + (parseFloat(loan.balance) || 0), 0);
+            const debtPayoffAmount = Math.min(totalDebt, 15000); // Actual debt to pay off (other loans only)
             const creditLimit = Math.min(offer.totalBalance, 15000); // Total credit limit offered
             const availableCredit = Math.max(0, creditLimit - debtPayoffAmount); // Remaining credit after paying debt
             const additional20Percent = Math.floor(creditLimit * 0.2);
