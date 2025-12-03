@@ -1063,32 +1063,46 @@ Ready to get started? I just need you to share screenshots of your loans with ot
                 } else {
                     // Regular text message - check if user is providing manual loan details or indicating they're done
                     if (userMessage) {
-                        // First check if they're indicating they're done sharing loans
-                        if (isDoneSharingLoans(userMessage) && extractedLoans.length >= 1) {
-                            // Customer is done - show consolidation offer
-                            const offer = calculateConsolidationOffer(extractedLoans);
-                            if (offer) {
-                                messages.push({ role: 'assistant', content: assistantMessage });
+                        // IMPORTANT: Check for manual loan details FIRST, before checking if they're done
+                        // This ensures we extract loan details even if the message also contains "done" phrases
+                        const manualLoan = extractLoanFromText(userMessage);
+                        if (manualLoan) {
+                            extractedLoans.push(manualLoan);
+                            // Acknowledge the loan
+                            const ackMsg = language === 'es'
+                                ? `¡Perfecto! Registré tu préstamo con ${manualLoan.lender}. Saldo: $${manualLoan.balance.toLocaleString()} MXN a ${manualLoan.rate}% ${manualLoan.rateType === 'monthly' ? 'mensual' : 'semanal'}.`
+                                : `Perfect! I recorded your loan with ${manualLoan.lender}. Balance: $${manualLoan.balance.toLocaleString()} MXN at ${manualLoan.rate}% ${manualLoan.rateType === 'monthly' ? 'monthly' : 'weekly'}.`;
+                            
+                            messages.push({ role: 'assistant', content: assistantMessage });
+                            messages.push({ role: 'assistant', content: ackMsg });
+                            
+                            // After extracting loan, check if they're also indicating they're done
+                            if (isDoneSharingLoans(userMessage) && extractedLoans.length >= 1) {
+                                // Customer is done - show consolidation offer
                                 setTimeout(() => {
-                                    const offerMessage = formatConsolidationOffer(extractedLoans, offer);
-                                    messages.push({ role: 'assistant', content: offerMessage });
-                                    renderMessages();
+                                    const offer = calculateConsolidationOffer(extractedLoans);
+                                    if (offer) {
+                                        const offerMessage = formatConsolidationOffer(extractedLoans, offer);
+                                        messages.push({ role: 'assistant', content: offerMessage });
+                                        renderMessages();
+                                    }
                                 }, 500);
-                            } else {
-                                messages.push({ role: 'assistant', content: assistantMessage });
                             }
                         } else {
-                            // Check if they're providing manual loan details
-                            const manualLoan = extractLoanFromText(userMessage);
-                            if (manualLoan) {
-                                extractedLoans.push(manualLoan);
-                                // Acknowledge but don't show offer yet - wait for them to say they're done
-                                const ackMsg = language === 'es'
-                                    ? `¡Perfecto! Registré tu préstamo con ${manualLoan.lender}. Saldo: $${manualLoan.balance.toLocaleString()} MXN a ${manualLoan.rate}% ${manualLoan.rateType === 'monthly' ? 'mensual' : 'semanal'}.`
-                                    : `Perfect! I recorded your loan with ${manualLoan.lender}. Balance: $${manualLoan.balance.toLocaleString()} MXN at ${manualLoan.rate}% ${manualLoan.rateType === 'monthly' ? 'monthly' : 'weekly'}.`;
-                                
-                                messages.push({ role: 'assistant', content: assistantMessage });
-                                messages.push({ role: 'assistant', content: ackMsg });
+                            // No loan details found - check if they're indicating they're done sharing loans
+                            if (isDoneSharingLoans(userMessage) && extractedLoans.length >= 1) {
+                                // Customer is done - show consolidation offer
+                                const offer = calculateConsolidationOffer(extractedLoans);
+                                if (offer) {
+                                    messages.push({ role: 'assistant', content: assistantMessage });
+                                    setTimeout(() => {
+                                        const offerMessage = formatConsolidationOffer(extractedLoans, offer);
+                                        messages.push({ role: 'assistant', content: offerMessage });
+                                        renderMessages();
+                                    }, 500);
+                                } else {
+                                    messages.push({ role: 'assistant', content: assistantMessage });
+                                }
                             } else {
                                 // Regular text message, no extraction needed
                                 messages.push({ role: 'assistant', content: assistantMessage });
