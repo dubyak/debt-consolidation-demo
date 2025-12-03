@@ -856,21 +856,23 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
             const lowerText = text.toLowerCase().trim();
             
             // Exact match for short responses like "no", "nope", "done"
-            const exactMatches = ['no', 'nope', 'done', 'nada', 'ya', 'listo', 'no mas', 'ya no'];
+            const exactMatches = ['no', 'nope', 'done', 'nada', 'ya', 'listo', 'no mas', 'ya no', 'eso es todo', 'es todo', 'ya estuvo'];
             if (exactMatches.includes(lowerText)) return true;
             
             // Partial match for longer phrases
             const donePhrases = [
-                'that\'s all', 'thats all', 'that is all',
+                'that\'s all', 'thats all', 'that is all', 'that\'s it', 'thats it',
                 'no more', 'no more loans', 'no more to share',
                 'i\'m done', 'im done', 'i am done',
                 'that\'s everything', 'thats everything', 'that is everything',
                 'finished', 'i\'m finished', 'im finished',
                 'all done', 'all set', 'ready to see',
                 'show me the offer', 'show the offer', 'ready for offer',
-                'eso es todo', 'no más', 'ya terminé', 'terminé',
+                'es todo', 'eso es todo', 'no es todo', 'ya es todo', // Spanish "that's all" variations
+                'no más', 'ya terminé', 'terminé', 'ya termine',
                 'listo para ver', 'muéstrame la oferta', 'esos son todos',
-                'no tengo más', 'ya no tengo', 'son todos'
+                'no tengo más', 'ya no tengo', 'son todos', 'ya no más',
+                'nada más', 'ninguno más', 'no hay más', 'solo esos', 'solamente esos'
             ];
             return donePhrases.some(phrase => lowerText.includes(phrase));
         }
