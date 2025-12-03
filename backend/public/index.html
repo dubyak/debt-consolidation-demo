@@ -298,7 +298,7 @@ FLOW TO FOLLOW (they've already opted in, so skip the pitch):
      b) A JSON object with the extracted loan data in this EXACT format (you MUST fill in the actual values from the image):
         {"loan": {"lender": "Lender Name", "balance": 1234.56, "rate": 16.0, "rateType": "monthly", "paymentFrequency": "biweekly"}}
      - IMPORTANT: The JSON must contain REAL extracted data, not empty values. Extract: lender name (e.g., Elektra, DiDi, BBVA), outstanding balance in MXN, and interest rate (convert monthly to weekly if needed).
-     - IMPORTANT: If you successfully extract the data, DO NOT include any error messages. Only include error messages if you truly cannot extract the data.
+     - CRITICAL RULE: If you successfully extract ANY loan data (lender, balance, rate), you MUST NOT include any error messages in your response. Only include error messages if you truly cannot extract the data (e.g., image is too blurry, missing critical information). If you can see the lender name, balance, and rate, you have successfully extracted the data - do NOT include error messages.
    - If you cannot clearly extract the data from the image, respond with: {"loan": null, "error": "Could not extract loan details"} AND ask them to either:
      * Share another clearer screenshot that shows the lender name, outstanding balance, and interest rate
      * Or provide the details manually (lender name, balance, and interest rate)
@@ -357,7 +357,7 @@ FLUJO DE CONVERSACIÓN:
      b) Un objeto JSON con los datos extraídos del préstamo en este formato EXACTO (DEBES llenar los valores reales de la imagen):
         {"loan": {"lender": "Nombre del Prestamista", "balance": 1234.56, "rate": 16.0, "rateType": "monthly", "paymentFrequency": "biweekly"}}
      - IMPORTANTE: El JSON debe contener datos REALES extraídos, no valores vacíos. Extrae: nombre del prestamista (ej., Elektra, DiDi, BBVA), saldo pendiente en MXN, y tasa de interés (convierte mensual a semanal si es necesario).
-     - IMPORTANTE: Si extraes los datos exitosamente, NO incluyas ningún mensaje de error. Solo incluye mensajes de error si realmente no puedes extraer los datos.
+     - REGLA CRÍTICA: Si extraes exitosamente CUALQUIER dato del préstamo (prestamista, saldo, tasa), NO debes incluir ningún mensaje de error en tu respuesta. Solo incluye mensajes de error si realmente no puedes extraer los datos (ej., imagen muy borrosa, falta información crítica). Si puedes ver el nombre del prestamista, saldo y tasa, has extraído los datos exitosamente - NO incluyas mensajes de error.
    - Si no puedes extraer claramente los datos de la imagen, responde con: {"loan": null, "error": "No se pudieron extraer los detalles del préstamo"} Y pídeles que:
      * Compartan otra captura más clara que muestre el nombre del prestamista, saldo pendiente y tasa de interés
      * O que te den los detalles manualmente (nombre del prestamista, saldo y tasa de interés)
