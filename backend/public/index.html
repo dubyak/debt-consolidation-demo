@@ -1012,6 +1012,8 @@ Ready to get started? I just need you to share screenshots of your loans with ot
                 // If this was an image upload, try to extract structured loan data
                 if (imageData) {
                     const extractedLoan = extractLoanData(assistantMessage);
+                    console.log('Extraction result:', extractedLoan);
+                    console.log('Full assistant message:', assistantMessage);
                     
                     if (extractedLoan && extractedLoan.lender && extractedLoan.balance && extractedLoan.rate) {
                         // Successfully extracted loan data
