@@ -441,26 +441,35 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
 
         // Extract JSON from agent response, with fallback to text parsing
         function extractLoanData(text) {
+            // Try JSON extraction first (wrapped in its own try/catch so we can fall back to text)
             try {
-                // Try to find JSON object in the response - look for loan object
                 const jsonMatch = text.match(/\{[\s\S]*?"loan"[\s\S]*?\}/);
                 if (jsonMatch) {
                     const parsed = JSON.parse(jsonMatch[0]);
-                    // Check if loan data is actually present and valid
                     if (parsed.loan && parsed.loan.lender && parsed.loan.balance && parsed.loan.rate) {
+                        console.log('Successfully extracted loan from JSON:', parsed.loan);
                         return parsed.loan;
                     }
                 }
-                // Also try to find JSON code blocks
+            } catch (e) {
+                console.log('JSON extraction failed, trying text extraction:', e.message);
+            }
+            
+            // Try JSON code blocks (also wrapped separately)
+            try {
                 const codeBlockMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
                 if (codeBlockMatch) {
                     const parsed = JSON.parse(codeBlockMatch[1]);
                     if (parsed.loan && parsed.loan.lender && parsed.loan.balance && parsed.loan.rate) {
+                        console.log('Successfully extracted loan from code block:', parsed.loan);
                         return parsed.loan;
                     }
                 }
+            } catch (e) {
+                console.log('Code block JSON extraction failed, trying text extraction:', e.message);
+            }
                 
-                // Fallback: Try to extract from text format if JSON not found
+            // Fallback: Try to extract from text format if JSON not found or invalid
                 // Look for patterns like "• Prestamista: Kueski" with bullet points and newlines
                 // Handle both bullet points (•) and plain text, with flexible whitespace
                 
@@ -519,17 +528,15 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
                     }
                 }
                 
-                // If we didn't find all three, log what we found for debugging
-                if (!lenderMatch || !balanceMatch || !rateMatch) {
-                    console.log('Text extraction partial match:', {
-                        lender: lenderMatch ? lenderMatch[1] : null,
-                        balance: balanceMatch ? balanceMatch[1] : null,
-                        rate: rateMatch ? rateMatch[1] : null
-                    });
-                }
-            } catch (e) {
-                console.warn('Failed to parse loan data from response:', e);
+            // If we didn't find all three, log what we found for debugging
+            if (!lenderMatch || !balanceMatch || !rateMatch) {
+                console.log('Text extraction partial match:', {
+                    lender: lenderMatch ? lenderMatch[1] : null,
+                    balance: balanceMatch ? balanceMatch[1] : null,
+                    rate: rateMatch ? rateMatch[1] : null
+                });
             }
+            
             return null;
         }
 
