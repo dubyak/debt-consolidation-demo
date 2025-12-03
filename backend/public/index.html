@@ -289,8 +289,9 @@ FLOW TO FOLLOW (they've already opted in, so skip the pitch):
    - Analyze the image and extract loan details
    - CRITICAL: After analyzing, you MUST respond with BOTH:
      a) A friendly confirmation message (2-3 sentences) that includes asking if they have more loans to share (e.g., "Perfect! I've got that one. Do you have any other loans you'd like to include?")
-     b) A JSON object with the extracted loan data in this EXACT format:
+     b) A JSON object with the extracted loan data in this EXACT format (you MUST fill in the actual values from the image):
         {"loan": {"lender": "Lender Name", "balance": 1234.56, "rate": 16.0, "rateType": "monthly", "paymentFrequency": "biweekly"}}
+     - IMPORTANT: The JSON must contain REAL extracted data, not empty values. Extract: lender name (e.g., Elektra, DiDi, BBVA), outstanding balance in MXN, and interest rate (convert monthly to weekly if needed).
    - If you cannot clearly extract the data from the image, respond with: {"loan": null, "error": "Could not extract loan details"} AND ask them to either:
      * Share another clearer screenshot that shows the lender name, outstanding balance, and interest rate
      * Or provide the details manually (lender name, balance, and interest rate)
@@ -346,8 +347,9 @@ FLUJO DE CONVERSACIÓN:
    - Analiza la imagen y extrae los detalles del préstamo
    - CRÍTICO: Después de analizar, DEBES responder con AMBOS:
      a) Un mensaje amigable de confirmación (2-3 oraciones) que incluya preguntar si tienen más préstamos para compartir (ej., "¡Perfecto! Ya tengo ese. ¿Tienes otros préstamos que quieras incluir?")
-     b) Un objeto JSON con los datos extraídos del préstamo en este formato EXACTO:
+     b) Un objeto JSON con los datos extraídos del préstamo en este formato EXACTO (DEBES llenar los valores reales de la imagen):
         {"loan": {"lender": "Nombre del Prestamista", "balance": 1234.56, "rate": 16.0, "rateType": "monthly", "paymentFrequency": "biweekly"}}
+     - IMPORTANTE: El JSON debe contener datos REALES extraídos, no valores vacíos. Extrae: nombre del prestamista (ej., Elektra, DiDi, BBVA), saldo pendiente en MXN, y tasa de interés (convierte mensual a semanal si es necesario).
    - Si no puedes extraer claramente los datos de la imagen, responde con: {"loan": null, "error": "No se pudieron extraer los detalles del préstamo"} Y pídeles que:
      * Compartan otra captura más clara que muestre el nombre del prestamista, saldo pendiente y tasa de interés
      * O que te den los detalles manualmente (nombre del prestamista, saldo y tasa de interés)
@@ -432,11 +434,22 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
         // Extract JSON from agent response
         function extractLoanData(text) {
             try {
-                // Try to find JSON object in the response
-                const jsonMatch = text.match(/\{[\s\S]*"loan"[\s\S]*\}/);
+                // Try to find JSON object in the response - look for loan object
+                const jsonMatch = text.match(/\{[\s\S]*?"loan"[\s\S]*?\}/);
                 if (jsonMatch) {
                     const parsed = JSON.parse(jsonMatch[0]);
-                    return parsed.loan;
+                    // Check if loan data is actually present and valid
+                    if (parsed.loan && parsed.loan.lender && parsed.loan.balance && parsed.loan.rate) {
+                        return parsed.loan;
+                    }
+                }
+                // Also try to find JSON code blocks
+                const codeBlockMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
+                if (codeBlockMatch) {
+                    const parsed = JSON.parse(codeBlockMatch[1]);
+                    if (parsed.loan && parsed.loan.lender && parsed.loan.balance && parsed.loan.rate) {
+                        return parsed.loan;
+                    }
                 }
             } catch (e) {
                 console.warn('Failed to parse loan data from response:', e);
@@ -624,8 +637,33 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
             };
         }
 
+        // Calculate payment dates
+        function calculatePaymentDates(numMonths) {
+            const today = new Date();
+            const firstPaymentDate = new Date(today);
+            firstPaymentDate.setMonth(firstPaymentDate.getMonth() + 1);
+            firstPaymentDate.setDate(15); // Set to 15th of next month
+            
+            const dueDate = new Date(firstPaymentDate);
+            
+            const formatDate = (date) => {
+                const months = language === 'es' 
+                    ? ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+                    : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+            };
+            
+            return {
+                firstPayment: formatDate(firstPaymentDate),
+                dueDate: formatDate(dueDate)
+            };
+        }
+
         // Format consolidation offer message
         function formatConsolidationOffer(loans, offer, showUpsell = false) {
+            const paymentDates = calculatePaymentDates(offer.numMonths);
+            const numPayments = offer.numMonths;
+            
             if (language === 'es') {
                 let message = `**Oferta de Consolidación**\n\n`;
                 message += `**Tus préstamos actuales:**\n`;
@@ -642,13 +680,15 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
                 message += `• **Tasa promedio actual:** ${offer.weightedRate.toFixed(2)}% semanal\n`;
                 message += `\n**Tu nueva oferta de consolidación:**\n`;
                 if (offer.includeAdditional10Percent) {
-                    message += `• **Monto consolidado:** $${offer.totalBalance.toLocaleString()} MXN (incluye $${offer.additionalAmount.toFixed(2)} adicionales)\n`;
+                    message += `• **Monto total del préstamo:** $${offer.totalBalance.toLocaleString()} MXN (incluye $${offer.additionalAmount.toFixed(2)} adicionales)\n`;
                 } else {
-                    message += `• **Monto consolidado:** $${offer.totalBalance.toLocaleString()} MXN\n`;
+                    message += `• **Monto total del préstamo:** $${offer.totalBalance.toLocaleString()} MXN\n`;
                 }
-                message += `• **Plazo:** ${offer.numMonths} meses (amortizado)\n`;
-                message += `• **Tasa:** ${offer.weeklyRate.toFixed(2)}% semanal (más baja que tu promedio actual)\n`;
-                message += `• **Nuevo pago mensual:** $${offer.newMonthlyPayment.toFixed(2)} MXN\n`;
+                message += `• **Tasa de interés semanal:** ${offer.weeklyRate.toFixed(2)}% semanal (más baja que tu promedio actual)\n`;
+                message += `• **Monto del pago mensual:** $${offer.newMonthlyPayment.toFixed(2)} MXN\n`;
+                message += `• **Número de pagos:** ${numPayments} pagos mensuales\n`;
+                message += `• **Fecha del primer pago:** ${paymentDates.firstPayment}\n`;
+                message += `• **Fecha de vencimiento:** ${paymentDates.dueDate}\n`;
                 message += `\n**¡Tus ahorros:**\n`;
                 message += `• **Ahorro en pago mensual:** $${offer.monthlyPaymentSavings.toFixed(2)} MXN (${((offer.monthlyPaymentSavings / offer.currentMonthlyPayment) * 100).toFixed(1)}% menos)\n`;
                 message += `• **Ahorro en interés mensual:** $${offer.monthlyInterestSavings.toFixed(2)} MXN\n`;
@@ -680,13 +720,15 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
                 message += `• **Current average rate:** ${offer.weightedRate.toFixed(2)}% weekly\n`;
                 message += `\n**Your new consolidation offer:**\n`;
                 if (offer.includeAdditional10Percent) {
-                    message += `• **Consolidated amount:** $${offer.totalBalance.toLocaleString()} MXN (includes $${offer.additionalAmount.toFixed(2)} additional)\n`;
+                    message += `• **Total loan amount:** $${offer.totalBalance.toLocaleString()} MXN (includes $${offer.additionalAmount.toFixed(2)} additional)\n`;
                 } else {
-                    message += `• **Consolidated amount:** $${offer.totalBalance.toLocaleString()} MXN\n`;
+                    message += `• **Total loan amount:** $${offer.totalBalance.toLocaleString()} MXN\n`;
                 }
-                message += `• **Term:** ${offer.numMonths} months (amortized)\n`;
-                message += `• **Rate:** ${offer.weeklyRate.toFixed(2)}% weekly (lower than your current average)\n`;
-                message += `• **New monthly payment:** $${offer.newMonthlyPayment.toFixed(2)} MXN\n`;
+                message += `• **Weekly interest rate:** ${offer.weeklyRate.toFixed(2)}% weekly (lower than your current average)\n`;
+                message += `• **Monthly payment amount:** $${offer.newMonthlyPayment.toFixed(2)} MXN\n`;
+                message += `• **Number of payments:** ${numPayments} monthly payments\n`;
+                message += `• **Date of first payment:** ${paymentDates.firstPayment}\n`;
+                message += `• **Due date:** ${paymentDates.dueDate}\n`;
                 message += `\n**Your savings:**\n`;
                 message += `• **Monthly payment savings:** $${offer.monthlyPaymentSavings.toFixed(2)} MXN (${((offer.monthlyPaymentSavings / offer.currentMonthlyPayment) * 100).toFixed(1)}% less)\n`;
                 message += `• **Monthly interest savings:** $${offer.monthlyInterestSavings.toFixed(2)} MXN\n`;
@@ -900,7 +942,13 @@ Ready to get started? I just need you to share screenshots of your loans with ot
                         loanExtractionAttempts = 0; // Reset fallback counter
                         
                         // Remove JSON from the displayed message (keep only the friendly text)
-                        assistantMessage = assistantMessage.replace(/\{[\s\S]*"loan"[\s\S]*\}/, '').trim();
+                        // Remove both inline JSON and code block JSON (including empty ones)
+                        assistantMessage = assistantMessage
+                            .replace(/\{[\s\S]*?"loan"[\s\S]*?\}/g, '')
+                            .replace(/```json\s*[\s\S]*?\s*```/g, '')
+                            .replace(/```\s*\{[\s\S]*?\}\s*```/g, '')
+                            .replace(/\{\s*\}/g, '') // Remove empty JSON objects
+                            .trim();
                         
                         // Just acknowledge the loan - don't show offer yet
                         // The agent will ask if they have more loans, and only show offer when customer says they're done
@@ -913,7 +961,13 @@ Ready to get started? I just need you to share screenshots of your loans with ot
                             : 'I couldn\'t clearly extract the loan details from this image. Could you help me in one of these ways?\n\n1. Share another clearer screenshot that shows the lender name, outstanding balance, and interest rate\n2. Or tell me the details manually: lender name, outstanding balance, and interest rate';
                         
                         // Update the assistant message to include the error message
-                        assistantMessage = assistantMessage.replace(/\{[\s\S]*"loan"[\s\S]*\}/, '').trim();
+                        // Remove JSON (including empty ones) and code blocks
+                        assistantMessage = assistantMessage
+                            .replace(/\{[\s\S]*?"loan"[\s\S]*?\}/g, '')
+                            .replace(/```json\s*[\s\S]*?\s*```/g, '')
+                            .replace(/```\s*\{[\s\S]*?\}\s*```/g, '')
+                            .replace(/\{\s*\}/g, '') // Remove empty JSON objects
+                            .trim();
                         if (assistantMessage) {
                             assistantMessage += '\n\n' + errorMsg;
                         } else {
