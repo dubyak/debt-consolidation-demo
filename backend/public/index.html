@@ -1020,29 +1020,28 @@ Ready to get started? I just need you to share screenshots of your loans with ot
                         loanExtractionAttempts = 0; // Reset fallback counter
                         
                         // Remove JSON from the displayed message (keep only the friendly text)
-                        // Also remove error messages that the LLM might have incorrectly included
                         assistantMessage = assistantMessage
                             .replace(/\{[\s\S]*?"loan"[\s\S]*?\}/g, '')
                             .replace(/```json\s*[\s\S]*?\s*```/g, '')
                             .replace(/```\s*\{[\s\S]*?\}\s*```/g, '')
                             .replace(/\{\s*\}/g, '') // Remove empty JSON objects
-                            // Remove error messages (both English and Spanish) - LLM shouldn't include these when extraction succeeds
-                            // Match the entire error message block - be very aggressive
-                            .replace(/\n\nNo pude extraer claramente[\s\S]*?O decirme los detalles manualmente[^\n]*/gi, '')
-                            .replace(/\n\nI couldn't clearly extract[\s\S]*?Or tell me the details manually[^\n]*/gi, '')
-                            .replace(/No pude extraer claramente[\s\S]*?O decirme los detalles manualmente[^\n]*/gi, '')
-                            .replace(/I couldn't clearly extract[\s\S]*?Or tell me the details manually[^\n]*/gi, '')
-                            // Also match individual error message components
-                            .replace(/No pude extraer claramente[\s\S]*?tasa de interés/gi, '')
-                            .replace(/I couldn't clearly extract[\s\S]*?interest rate/gi, '')
-                            .replace(/¿Podrías ayudarme[\s\S]*?tasa de interés/gi, '')
-                            .replace(/Could you help me[\s\S]*?interest rate/gi, '')
-                            .replace(/Compartir otra captura[\s\S]*?tasa de interés/gi, '')
-                            .replace(/Share another clearer screenshot[\s\S]*?interest rate/gi, '')
-                            .replace(/O decirme los detalles manualmente[\s\S]*?tasa de interés/gi, '')
-                            .replace(/Or tell me the details manually[\s\S]*?interest rate/gi, '')
-                            .replace(/\n\n\n+/g, '\n\n') // Clean up multiple newlines
                             .trim();
+                        
+                        // SIMPLE FIX: If extraction succeeded, truncate at the "do you have more loans" question
+                        // This removes any error messages the LLM incorrectly included after that question
+                        const doneQuestionEs = '¿Tienes otros préstamos que quieras incluir?';
+                        const doneQuestionEn = 'Do you have any other loans you\'d like to include?';
+                        let questionIndex = assistantMessage.indexOf(doneQuestionEs);
+                        if (questionIndex === -1) {
+                            questionIndex = assistantMessage.indexOf(doneQuestionEn);
+                        }
+                        if (questionIndex !== -1) {
+                            const endOfQuestion = questionIndex + (assistantMessage.indexOf(doneQuestionEs) !== -1 ? doneQuestionEs.length : doneQuestionEn.length);
+                            assistantMessage = assistantMessage.substring(0, endOfQuestion);
+                        }
+                        
+                        // Clean up any trailing whitespace or emoji
+                        assistantMessage = assistantMessage.replace(/\n\n\n+/g, '\n\n').trim();
                         
                         // Just acknowledge the loan - don't show offer yet
                         // The agent will ask if they have more loans, and only show offer when customer says they're done
