@@ -477,7 +477,9 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
                 
                 const ratePatterns = [
                     /[•\-\*]\s*(?:Interest Rate|Tasa|Tasa de Interés):\s*([\d.]+)%\s*(weekly|semanal|monthly|mensual)/i,
-                    /(?:Interest Rate|Tasa|Tasa de Interés):\s*([\d.]+)%\s*(weekly|semanal|monthly|mensual)/i
+                    /(?:Interest Rate|Tasa|Tasa de Interés):\s*([\d.]+)%\s*(weekly|semanal|monthly|mensual)/i,
+                    // Handle case where rate type might be on a separate line or have extra whitespace
+                    /[•\-\*]\s*(?:Interest Rate|Tasa|Tasa de Interés):\s*([\d.]+)%[\s\n]*(weekly|semanal|monthly|mensual)/i
                 ];
                 
                 let lenderMatch = null;
@@ -1024,6 +1026,12 @@ Ready to get started? I just need you to share screenshots of your loans with ot
                             .replace(/```\s*\{[\s\S]*?\}\s*```/g, '')
                             .replace(/\{\s*\}/g, '') // Remove empty JSON objects
                             // Remove error messages (both English and Spanish) - LLM shouldn't include these when extraction succeeds
+                            // Match the entire error message block - be very aggressive
+                            .replace(/\n\nNo pude extraer claramente[\s\S]*?O decirme los detalles manualmente[^\n]*/gi, '')
+                            .replace(/\n\nI couldn't clearly extract[\s\S]*?Or tell me the details manually[^\n]*/gi, '')
+                            .replace(/No pude extraer claramente[\s\S]*?O decirme los detalles manualmente[^\n]*/gi, '')
+                            .replace(/I couldn't clearly extract[\s\S]*?Or tell me the details manually[^\n]*/gi, '')
+                            // Also match individual error message components
                             .replace(/No pude extraer claramente[\s\S]*?tasa de interés/gi, '')
                             .replace(/I couldn't clearly extract[\s\S]*?interest rate/gi, '')
                             .replace(/¿Podrías ayudarme[\s\S]*?tasa de interés/gi, '')
