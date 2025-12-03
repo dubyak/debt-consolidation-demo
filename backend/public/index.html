@@ -476,8 +476,8 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
                 // More flexible patterns that handle newlines and bullet points
                 // Use multiline matching to handle cases where bullet and text are on separate lines
                 const lenderPatterns = [
-                    /[•\-\*][\s\n]*(?:Lender|Prestador|Prestamista):[\s\n]*([A-Za-z\s]+(?:México|Pago|Crédito)?)/i,
-                    /(?:Lender|Prestador|Prestamista):[\s\n]*([A-Za-z\s]+(?:México|Pago|Crédito)?)/i
+                    /[•\-\*][\s\n]*(?:Lender|Prestador|Prestamista):[\s\n]*([A-Za-z0-9\s]+?)(?=\n|$)/i,
+                    /(?:Lender|Prestador|Prestamista):[\s\n]*([A-Za-z0-9\s]+?)(?=\n|$)/i
                 ];
                 
                 const balancePatterns = [
@@ -510,11 +510,18 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
                     if (rateMatch) break;
                 }
                 
+                console.log('Text extraction attempting with text:', text.substring(0, 500));
+                console.log('Lender match:', lenderMatch);
+                console.log('Balance match:', balanceMatch);
+                console.log('Rate match:', rateMatch);
+                
                 if (lenderMatch && balanceMatch && rateMatch) {
                     const lender = lenderMatch[1].trim();
                     const balance = parseFloat(balanceMatch[1].replace(/,/g, ''));
                     const rate = parseFloat(rateMatch[1]);
                     const rateType = rateMatch[2].toLowerCase().includes('monthly') || rateMatch[2].toLowerCase().includes('mensual') ? 'monthly' : 'weekly';
+                    
+                    console.log('Parsed values:', { lender, balance, rate, rateType });
                     
                     if (lender && balance && rate && !isNaN(balance) && !isNaN(rate) && balance > 0 && rate > 0) {
                         console.log('Successfully extracted loan from text:', { lender, balance, rate, rateType });
@@ -525,6 +532,8 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
                             rateType: rateType,
                             paymentFrequency: 'biweekly'
                         };
+                    } else {
+                        console.log('Validation failed:', { lender: !!lender, balance: !isNaN(balance) && balance > 0, rate: !isNaN(rate) && rate > 0 });
                     }
                 }
                 
@@ -599,9 +608,9 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
             const targetWeeklyPayment = targetMonthlyPayment / 4.33;
             
             // Binary search for the rate
-            let low = 0;
+            let low = 0.1; // Minimum 0.1% weekly rate (don't return 0)
             let high = 20; // Max 20% weekly rate
-            let bestRate = 0;
+            let bestRate = low;
             const tolerance = 0.01; // 0.01% precision
             
             while (high - low > tolerance) {
@@ -616,7 +625,8 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
                 }
             }
             
-            return bestRate;
+            // Ensure we return at least a small positive rate
+            return Math.max(bestRate, 0.5);
         }
 
         // Calculate current total monthly payment across all loans (amortized estimate)
@@ -727,7 +737,9 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
             firstPaymentDate.setMonth(firstPaymentDate.getMonth() + 1);
             firstPaymentDate.setDate(15); // Set to 15th of next month
             
+            // Due date is numMonths after first payment (last payment date)
             const dueDate = new Date(firstPaymentDate);
+            dueDate.setMonth(dueDate.getMonth() + numMonths - 1);
             
             const formatDate = (date) => {
                 const months = language === 'es' 
@@ -1046,7 +1058,10 @@ Ready to get started? I just need you to share screenshots of your loans with ot
                         // Use regex to handle variations in the question text
                         const questionPatterns = [
                             /\¿Tienes otros préstamos que quieras incluir\?/i,
+                            /\¿Tienes más préstamos que quieras incluir\?/i,
+                            /\¿Tienes más préstamos que quieras compartir\?/i,
                             /Do you have any other loans you'?d like to include\?/i,
+                            /Do you have more loans to share\?/i,
                             /\¿Tienes más préstamos/i,
                             /Do you have more loans/i
                         ];
