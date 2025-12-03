@@ -461,21 +461,23 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
                 }
                 
                 // Fallback: Try to extract from text format if JSON not found
-                // Look for patterns like "Lender: Kueski" or "• Lender: Kueski" or "Lender: Elektra"
-                // Handle both bullet points and plain text
+                // Look for patterns like "• Prestamista: Kueski" with bullet points and newlines
+                // Handle both bullet points (•) and plain text, with flexible whitespace
+                
+                // More flexible patterns that handle newlines and bullet points
                 const lenderPatterns = [
-                    /(?:Lender|Prestador|Prestamista):\s*([A-Za-z\s]+(?:México|Pago|Crédito|Pago)?)/i,
-                    /•\s*(?:Lender|Prestador|Prestamista):\s*([A-Za-z\s]+(?:México|Pago|Crédito|Pago)?)/i
+                    /[•\-\*]\s*(?:Lender|Prestador|Prestamista):\s*([A-Za-z\s]+(?:México|Pago|Crédito)?)/i,
+                    /(?:Lender|Prestador|Prestamista):\s*([A-Za-z\s]+(?:México|Pago|Crédito)?)/i
                 ];
                 
                 const balancePatterns = [
-                    /(?:Balance|Saldo):\s*\$?([\d,]+\.?\d*)\s*MXN/i,
-                    /•\s*(?:Balance|Saldo):\s*\$?([\d,]+\.?\d*)\s*MXN/i
+                    /[•\-\*]\s*(?:Balance|Saldo):\s*\$?([\d,]+\.?\d*)\s*MXN/i,
+                    /(?:Balance|Saldo):\s*\$?([\d,]+\.?\d*)\s*MXN/i
                 ];
                 
                 const ratePatterns = [
-                    /(?:Interest Rate|Tasa|Tasa de Interés):\s*([\d.]+)%\s*(weekly|semanal|monthly|mensual)/i,
-                    /•\s*(?:Interest Rate|Tasa|Tasa de Interés):\s*([\d.]+)%\s*(weekly|semanal|monthly|mensual)/i
+                    /[•\-\*]\s*(?:Interest Rate|Tasa|Tasa de Interés):\s*([\d.]+)%\s*(weekly|semanal|monthly|mensual)/i,
+                    /(?:Interest Rate|Tasa|Tasa de Interés):\s*([\d.]+)%\s*(weekly|semanal|monthly|mensual)/i
                 ];
                 
                 let lenderMatch = null;
@@ -504,7 +506,8 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
                     const rate = parseFloat(rateMatch[1]);
                     const rateType = rateMatch[2].toLowerCase().includes('monthly') || rateMatch[2].toLowerCase().includes('mensual') ? 'monthly' : 'weekly';
                     
-                    if (lender && balance && rate && !isNaN(balance) && !isNaN(rate)) {
+                    if (lender && balance && rate && !isNaN(balance) && !isNaN(rate) && balance > 0 && rate > 0) {
+                        console.log('Successfully extracted loan from text:', { lender, balance, rate, rateType });
                         return {
                             lender: lender,
                             balance: balance,
@@ -513,6 +516,15 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
                             paymentFrequency: 'biweekly'
                         };
                     }
+                }
+                
+                // If we didn't find all three, log what we found for debugging
+                if (!lenderMatch || !balanceMatch || !rateMatch) {
+                    console.log('Text extraction partial match:', {
+                        lender: lenderMatch ? lenderMatch[1] : null,
+                        balance: balanceMatch ? balanceMatch[1] : null,
+                        rate: rateMatch ? rateMatch[1] : null
+                    });
                 }
             } catch (e) {
                 console.warn('Failed to parse loan data from response:', e);
@@ -1005,12 +1017,21 @@ Ready to get started? I just need you to share screenshots of your loans with ot
                         loanExtractionAttempts = 0; // Reset fallback counter
                         
                         // Remove JSON from the displayed message (keep only the friendly text)
-                        // The LLM should handle all messaging, we just clean up the JSON
+                        // Also remove error messages that the LLM might have incorrectly included
                         assistantMessage = assistantMessage
                             .replace(/\{[\s\S]*?"loan"[\s\S]*?\}/g, '')
                             .replace(/```json\s*[\s\S]*?\s*```/g, '')
                             .replace(/```\s*\{[\s\S]*?\}\s*```/g, '')
                             .replace(/\{\s*\}/g, '') // Remove empty JSON objects
+                            // Remove error messages (both English and Spanish) - LLM shouldn't include these when extraction succeeds
+                            .replace(/No pude extraer claramente[\s\S]*?tasa de interés/gi, '')
+                            .replace(/I couldn't clearly extract[\s\S]*?interest rate/gi, '')
+                            .replace(/¿Podrías ayudarme[\s\S]*?tasa de interés/gi, '')
+                            .replace(/Could you help me[\s\S]*?interest rate/gi, '')
+                            .replace(/Compartir otra captura[\s\S]*?tasa de interés/gi, '')
+                            .replace(/Share another clearer screenshot[\s\S]*?interest rate/gi, '')
+                            .replace(/O decirme los detalles manualmente[\s\S]*?tasa de interés/gi, '')
+                            .replace(/Or tell me the details manually[\s\S]*?interest rate/gi, '')
                             .replace(/\n\n\n+/g, '\n\n') // Clean up multiple newlines
                             .trim();
                         
