@@ -437,7 +437,7 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
             elements.langToggle.textContent = t.langToggle;
         }
 
-        // Extract JSON from agent response
+        // Extract JSON from agent response, with fallback to text parsing
         function extractLoanData(text) {
             try {
                 // Try to find JSON object in the response - look for loan object
@@ -455,6 +455,29 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
                     const parsed = JSON.parse(codeBlockMatch[1]);
                     if (parsed.loan && parsed.loan.lender && parsed.loan.balance && parsed.loan.rate) {
                         return parsed.loan;
+                    }
+                }
+                
+                // Fallback: Try to extract from text format if JSON not found
+                // Look for patterns like "Lender: Kueski" or "• Lender: Kueski"
+                const lenderMatch = text.match(/(?:Lender|Prestador|Prestamista):\s*([A-Za-z\s]+(?:México|Pago|Crédito)?)/i);
+                const balanceMatch = text.match(/(?:Balance|Saldo):\s*\$?([\d,]+\.?\d*)\s*MXN/i);
+                const rateMatch = text.match(/(?:Interest Rate|Tasa|Tasa de Interés):\s*([\d.]+)%\s*(weekly|semanal|monthly|mensual)/i);
+                
+                if (lenderMatch && balanceMatch && rateMatch) {
+                    const lender = lenderMatch[1].trim();
+                    const balance = parseFloat(balanceMatch[1].replace(/,/g, ''));
+                    const rate = parseFloat(rateMatch[1]);
+                    const rateType = rateMatch[2].toLowerCase().includes('monthly') || rateMatch[2].toLowerCase().includes('mensual') ? 'monthly' : 'weekly';
+                    
+                    if (lender && balance && rate) {
+                        return {
+                            lender: lender,
+                            balance: balance,
+                            rate: rate,
+                            rateType: rateType,
+                            paymentFrequency: 'biweekly'
+                        };
                     }
                 }
             } catch (e) {
@@ -949,11 +972,16 @@ Ready to get started? I just need you to share screenshots of your loans with ot
                         
                         // Remove JSON from the displayed message (keep only the friendly text)
                         // Remove both inline JSON and code block JSON (including empty ones)
+                        // Also remove error messages about extraction failure
                         assistantMessage = assistantMessage
                             .replace(/\{[\s\S]*?"loan"[\s\S]*?\}/g, '')
                             .replace(/```json\s*[\s\S]*?\s*```/g, '')
                             .replace(/```\s*\{[\s\S]*?\}\s*```/g, '')
                             .replace(/\{\s*\}/g, '') // Remove empty JSON objects
+                            .replace(/I couldn't clearly extract[\s\S]*?interest rate/gi, '') // Remove error message
+                            .replace(/No pude extraer claramente[\s\S]*?tasa de interés/gi, '') // Remove error message in Spanish
+                            .replace(/Could you help me[\s\S]*?interest rate/gi, '') // Remove error message continuation
+                            .replace(/¿Podrías ayudarme[\s\S]*?tasa de interés/gi, '') // Remove error message continuation in Spanish
                             .trim();
                         
                         // Just acknowledge the loan - don't show offer yet
