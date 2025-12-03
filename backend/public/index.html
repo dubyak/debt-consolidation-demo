@@ -1053,44 +1053,28 @@ Ready to get started? I just need you to share screenshots of your loans with ot
                             .replace(/\{\s*\}/g, '') // Remove empty JSON objects
                             .trim();
                         
-                        // SIMPLE FIX: If extraction succeeded, truncate at the "do you have more loans" question
-                        // This removes any error messages the LLM incorrectly included after that question
-                        // Use regex to handle variations in the question text
-                        const questionPatterns = [
-                            /\¿Tienes otros préstamos que quieras incluir\?/i,
-                            /\¿Tienes más préstamos que quieras incluir\?/i,
-                            /\¿Tienes más préstamos que quieras compartir\?/i,
-                            /Do you have any other loans you'?d like to include\?/i,
-                            /Do you have more loans to share\?/i,
-                            /\¿Tienes más préstamos/i,
-                            /Do you have more loans/i
-                        ];
-                        
-                        for (const pattern of questionPatterns) {
-                            const match = assistantMessage.match(pattern);
-                            if (match) {
-                                const endOfQuestion = match.index + match[0].length;
-                                assistantMessage = assistantMessage.substring(0, endOfQuestion);
-                                break;
-                            }
-                        }
-                        
-                        // Also try to remove any error messages that appear after the question
-                        // by looking for common error message starts
+                        // CRITICAL: Remove any error messages the LLM incorrectly included
+                        // Do this FIRST before anything else - find error message start and cut everything after
                         const errorStarts = [
                             'No pude extraer',
                             'I couldn\'t clearly extract',
+                            'I couldn\'t extract',
                             'Could you help me',
-                            '¿Podrías ayudarme'
+                            '¿Podrías ayudarme',
+                            'Compartir otra captura',
+                            'Share another clearer'
                         ];
+                        
                         for (const errorStart of errorStarts) {
                             const errorIndex = assistantMessage.indexOf(errorStart);
                             if (errorIndex !== -1) {
+                                console.log('Found error message at index:', errorIndex, 'text:', errorStart);
                                 assistantMessage = assistantMessage.substring(0, errorIndex).trim();
+                                break; // Stop after first match
                             }
                         }
                         
-                        // Clean up any trailing whitespace or emoji
+                        // Clean up any trailing whitespace
                         assistantMessage = assistantMessage.replace(/\n\n\n+/g, '\n\n').trim();
                         
                         // Just acknowledge the loan - don't show offer yet
