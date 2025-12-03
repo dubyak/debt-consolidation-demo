@@ -465,21 +465,20 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
                 // Handle both bullet points (•) and plain text, with flexible whitespace
                 
                 // More flexible patterns that handle newlines and bullet points
+                // Use multiline matching to handle cases where bullet and text are on separate lines
                 const lenderPatterns = [
-                    /[•\-\*]\s*(?:Lender|Prestador|Prestamista):\s*([A-Za-z\s]+(?:México|Pago|Crédito)?)/i,
-                    /(?:Lender|Prestador|Prestamista):\s*([A-Za-z\s]+(?:México|Pago|Crédito)?)/i
+                    /[•\-\*][\s\n]*(?:Lender|Prestador|Prestamista):[\s\n]*([A-Za-z\s]+(?:México|Pago|Crédito)?)/i,
+                    /(?:Lender|Prestador|Prestamista):[\s\n]*([A-Za-z\s]+(?:México|Pago|Crédito)?)/i
                 ];
                 
                 const balancePatterns = [
-                    /[•\-\*]\s*(?:Balance|Saldo):\s*\$?([\d,]+\.?\d*)\s*MXN/i,
-                    /(?:Balance|Saldo):\s*\$?([\d,]+\.?\d*)\s*MXN/i
+                    /[•\-\*][\s\n]*(?:Balance|Saldo):[\s\n]*\$?([\d,]+\.?\d*)[\s\n]*MXN/i,
+                    /(?:Balance|Saldo):[\s\n]*\$?([\d,]+\.?\d*)[\s\n]*MXN/i
                 ];
                 
                 const ratePatterns = [
-                    /[•\-\*]\s*(?:Interest Rate|Tasa|Tasa de Interés):\s*([\d.]+)%\s*(weekly|semanal|monthly|mensual)/i,
-                    /(?:Interest Rate|Tasa|Tasa de Interés):\s*([\d.]+)%\s*(weekly|semanal|monthly|mensual)/i,
-                    // Handle case where rate type might be on a separate line or have extra whitespace
-                    /[•\-\*]\s*(?:Interest Rate|Tasa|Tasa de Interés):\s*([\d.]+)%[\s\n]*(weekly|semanal|monthly|mensual)/i
+                    /[•\-\*][\s\n]*(?:Interest Rate|Tasa|Tasa de Interés):[\s\n]*([\d.]+)%[\s\n]*(weekly|semanal|monthly|mensual)/i,
+                    /(?:Interest Rate|Tasa|Tasa de Interés):[\s\n]*([\d.]+)%[\s\n]*(weekly|semanal|monthly|mensual)/i
                 ];
                 
                 let lenderMatch = null;
