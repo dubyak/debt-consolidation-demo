@@ -52,6 +52,12 @@
             border-radius: 2px;
             transition: width 0.3s ease;
         }
+        .andrea-image {
+            object-fit: cover;
+            object-position: center center;
+            width: 100%;
+            height: 100%;
+        }
     </style>
     <script>
         tailwind.config = {
@@ -76,7 +82,7 @@
             <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
                 <div class="text-center mb-6">
                     <div class="w-16 h-16 rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 flex items-center justify-center mx-auto mb-4 overflow-hidden">
-                        <img src="images/andrea.png" alt="Andrea" class="w-full h-full object-cover rounded-full" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <img src="images/andrea.png" alt="Andrea" class="andrea-image rounded-full" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                         <span class="text-3xl" style="display:none;">👩‍💼</span>
                     </div>
                     <h2 class="text-2xl font-bold text-gray-800 mb-2">Tala Demo</h2>
@@ -129,7 +135,7 @@
             <!-- Header -->
             <div class="bg-gradient-to-r from-emerald-400 to-teal-500 px-4 py-4 flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center overflow-hidden">
-                    <img src="images/andrea.png" alt="Andrea" class="w-full h-full object-cover object-center rounded-full" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <img src="images/andrea.png" alt="Andrea" class="andrea-image rounded-full" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                     <span class="text-xl" style="display:none;">👩‍💼</span>
                 </div>
                 <div class="flex-1 flex items-center gap-2">
@@ -952,7 +958,7 @@ Ready to get started? I just need you to share screenshots of your loans with ot
                         
                         // Just acknowledge the loan - don't show offer yet
                         // The agent will ask if they have more loans, and only show offer when customer says they're done
-                        messages.push({ role: 'assistant', content: assistantMessage });
+                messages.push({ role: 'assistant', content: assistantMessage });
                     } else {
                         // Extraction failed - ask customer for manual details or better photo
                         loanExtractionAttempts++;
