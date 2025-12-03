@@ -841,17 +841,24 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
         // Check if customer indicates they're done sharing loans
         function isDoneSharingLoans(text) {
             if (!text) return false;
-            const lowerText = text.toLowerCase();
+            const lowerText = text.toLowerCase().trim();
+            
+            // Exact match for short responses like "no", "nope", "done"
+            const exactMatches = ['no', 'nope', 'done', 'nada', 'ya', 'listo', 'no mas', 'ya no'];
+            if (exactMatches.includes(lowerText)) return true;
+            
+            // Partial match for longer phrases
             const donePhrases = [
                 'that\'s all', 'thats all', 'that is all',
                 'no more', 'no more loans', 'no more to share',
-                'i\'m done', 'im done', 'i am done', 'done',
+                'i\'m done', 'im done', 'i am done',
                 'that\'s everything', 'thats everything', 'that is everything',
                 'finished', 'i\'m finished', 'im finished',
                 'all done', 'all set', 'ready to see',
                 'show me the offer', 'show the offer', 'ready for offer',
                 'eso es todo', 'no más', 'ya terminé', 'terminé',
-                'listo', 'listo para ver', 'muéstrame la oferta'
+                'listo para ver', 'muéstrame la oferta', 'esos son todos',
+                'no tengo más', 'ya no tengo', 'son todos'
             ];
             return donePhrases.some(phrase => lowerText.includes(phrase));
         }
@@ -1036,15 +1043,36 @@ Ready to get started? I just need you to share screenshots of your loans with ot
                         
                         // SIMPLE FIX: If extraction succeeded, truncate at the "do you have more loans" question
                         // This removes any error messages the LLM incorrectly included after that question
-                        const doneQuestionEs = '¿Tienes otros préstamos que quieras incluir?';
-                        const doneQuestionEn = 'Do you have any other loans you\'d like to include?';
-                        let questionIndex = assistantMessage.indexOf(doneQuestionEs);
-                        if (questionIndex === -1) {
-                            questionIndex = assistantMessage.indexOf(doneQuestionEn);
+                        // Use regex to handle variations in the question text
+                        const questionPatterns = [
+                            /\¿Tienes otros préstamos que quieras incluir\?/i,
+                            /Do you have any other loans you'?d like to include\?/i,
+                            /\¿Tienes más préstamos/i,
+                            /Do you have more loans/i
+                        ];
+                        
+                        for (const pattern of questionPatterns) {
+                            const match = assistantMessage.match(pattern);
+                            if (match) {
+                                const endOfQuestion = match.index + match[0].length;
+                                assistantMessage = assistantMessage.substring(0, endOfQuestion);
+                                break;
+                            }
                         }
-                        if (questionIndex !== -1) {
-                            const endOfQuestion = questionIndex + (assistantMessage.indexOf(doneQuestionEs) !== -1 ? doneQuestionEs.length : doneQuestionEn.length);
-                            assistantMessage = assistantMessage.substring(0, endOfQuestion);
+                        
+                        // Also try to remove any error messages that appear after the question
+                        // by looking for common error message starts
+                        const errorStarts = [
+                            'No pude extraer',
+                            'I couldn\'t clearly extract',
+                            'Could you help me',
+                            '¿Podrías ayudarme'
+                        ];
+                        for (const errorStart of errorStarts) {
+                            const errorIndex = assistantMessage.indexOf(errorStart);
+                            if (errorIndex !== -1) {
+                                assistantMessage = assistantMessage.substring(0, errorIndex).trim();
+                            }
                         }
                         
                         // Clean up any trailing whitespace or emoji
