@@ -18,7 +18,7 @@
     - Bilingual support (English/Spanish)
     - Image upload for loan screenshots
     - Editable customer profile
-    - Full conversation flow with Maya, the Tala loan advisor
+    - Full conversation flow with Andrea, the Tala loan advisor
 -->
 <html lang="en">
 <head>
@@ -31,10 +31,56 @@
         body {
             font-family: 'Nunito', sans-serif;
         }
+        /* Design System Colors */
+        :root {
+            --orange-primary: #FF6B35;
+            --orange-hover: #E55A2B;
+            --light-blue: #E3F2FD;
+            --blue-accent: #2196F3;
+            --dark-grey: #2D2D2D;
+            --light-grey-bg: #F5F5F5;
+        }
+        .btn-primary {
+            background-color: var(--orange-primary);
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: var(--orange-hover);
+        }
+        .progress-bar {
+            background-color: var(--light-blue);
+            height: 4px;
+            border-radius: 2px;
+        }
+        .progress-fill {
+            background-color: var(--blue-accent);
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
     </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'orange-primary': '#FF6B35',
+                        'orange-hover': '#E55A2B',
+                        'light-blue': '#E3F2FD',
+                        'blue-accent': '#2196F3',
+                        'dark-grey': '#2D2D2D',
+                    }
+                }
+            }
+        }
+    </script>
 </head>
 <body>
-    <div id="app" class="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex flex-col items-center justify-center p-4">
+    <div id="app" class="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
         <!-- Phone Frame -->
         <div class="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden border-8 border-gray-800 relative">
             <!-- Status Bar -->
@@ -48,24 +94,28 @@
             </div>
             
             <!-- Header -->
-            <div class="bg-gradient-to-r from-teal-500 to-emerald-500 px-4 py-4 flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                    <span class="text-xl">🌿</span>
+            <div class="bg-gradient-to-r from-emerald-400 to-teal-500 px-4 py-4 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center overflow-hidden">
+                    <img id="andreaImage" src="images/andrea.png" alt="Andrea" class="w-full h-full object-cover rounded-full" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <span class="text-xl" style="display:none;">👩‍💼</span>
                 </div>
-                <div class="flex-1">
-                    <h1 id="title" class="text-white font-semibold text-lg tracking-tight">Tala</h1>
-                    <p id="subtitle" class="text-teal-100 text-xs">Tu aliado financiero</p>
+                <div class="flex-1 flex items-center gap-2">
+                    <div>
+                        <h1 id="title" class="text-white font-semibold text-lg tracking-tight">Tala</h1>
+                        <p id="subtitle" class="text-white/90 text-xs">Tu aliado financiero</p>
+                    </div>
+                    <img src="https://www.tala.co/wp-content/uploads/2021/06/tala-logo-white.svg" alt="Tala Logo" class="h-5 opacity-90" onerror="this.style.display='none';">
                 </div>
                 <div class="flex items-center gap-2">
                     <button 
                         id="langToggle"
-                        class="px-2 py-1 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors"
+                        class="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors"
                     >
                         EN
                     </button>
                     <button 
                         id="resetBtn"
-                        class="text-white/70 hover:text-white text-xs underline"
+                        class="text-white/80 hover:text-white text-xs underline"
                     >
                         Reiniciar
                     </button>
@@ -73,7 +123,7 @@
             </div>
 
             <!-- Messages Area -->
-            <div id="messagesArea" class="h-96 overflow-y-auto p-4 space-y-3 bg-gray-50">
+            <div id="messagesArea" class="h-96 overflow-y-auto p-4 space-y-3 bg-white">
                 <!-- Messages will be inserted here -->
             </div>
 
@@ -83,7 +133,7 @@
                     <button
                         type="button"
                         id="imageBtn"
-                        class="w-10 h-10 rounded-full bg-teal-100 hover:bg-teal-200 flex items-center justify-center text-teal-600 transition-colors flex-shrink-0"
+                        class="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 transition-colors flex-shrink-0"
                     >
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -99,74 +149,18 @@
                         type="text"
                         id="messageInput"
                         placeholder="Escribe un mensaje..."
-                        class="flex-1 bg-gray-100 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
+                        class="flex-1 bg-gray-100 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20 transition-all"
                     />
                     <button
                         type="submit"
                         id="sendBtn"
-                        class="w-10 h-10 rounded-full bg-teal-500 hover:bg-teal-600 disabled:bg-gray-300 flex items-center justify-center text-white transition-colors flex-shrink-0"
+                        class="w-10 h-10 rounded-full bg-[#FF6B35] hover:bg-[#E55A2B] disabled:bg-gray-300 flex items-center justify-center text-white transition-colors flex-shrink-0"
                     >
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                         </svg>
                     </button>
                 </form>
-            </div>
-        </div>
-
-        <!-- Editable Demo Controls -->
-        <div class="mt-6 max-w-sm w-full bg-white/90 backdrop-blur rounded-xl p-4 shadow-lg">
-            <h2 id="demoTitle" class="font-bold text-teal-800 mb-3 text-sm">🧪 Controles del Demo</h2>
-            <div class="space-y-3">
-                <div>
-                    <label id="customerLabel" class="text-xs text-gray-500 block mb-1">Nombre del Cliente</label>
-                    <input
-                        type="text"
-                        id="customerNameInput"
-                        class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300"
-                    />
-                </div>
-                <div class="grid grid-cols-3 gap-2">
-                    <div>
-                        <label id="limitLabel" class="text-xs text-gray-500 block mb-1">Límite Tala Actual (MXN)</label>
-                        <input
-                            type="number"
-                            id="currentLimitInput"
-                            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300"
-                        />
-                    </div>
-                    <div>
-                        <label id="rateLabel" class="text-xs text-gray-500 block mb-1">Tasa Tala (%/semana)</label>
-                        <input
-                            type="number"
-                            step="0.1"
-                            id="currentRateInput"
-                            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300"
-                        />
-                    </div>
-                    <div>
-                        <label id="termLabel" class="text-xs text-gray-500 block mb-1">Plazo (semanas)</label>
-                        <input
-                            type="number"
-                            id="currentTermInput"
-                            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300"
-                        />
-                    </div>
-                </div>
-                <div class="pt-2 flex items-center justify-between">
-                    <p class="text-xs text-gray-500">
-                        Consolidación Máx: <span class="font-semibold text-teal-600">$15,000 MXN max</span>
-                    </p>
-                    <button
-                        id="applyRestartBtn"
-                        class="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white text-xs font-semibold rounded-lg transition-colors"
-                    >
-                        Aplicar y Reiniciar
-                    </button>
-                </div>
-                <p id="uploadTip" class="text-teal-600 text-xs mt-2">
-                    💡 Sube cualquier imagen para simular compartir un préstamo
-                </p>
             </div>
         </div>
     </div>
@@ -177,39 +171,19 @@
                 title: 'Tala',
                 subtitle: 'Your loan buddy',
                 reset: 'Reset',
-                loansShared: 'loans shared',
                 typePlaceholder: 'Type a message...',
-                demoTitle: '🧪 Demo Controls',
-                customer: 'Customer Name',
-                loansCompleted: 'loans completed',
-                currentLimit: 'Current Tala Limit (MXN)',
-                offeredLimit: 'Max Consolidation',
-                currentRate: 'Tala Rate (%/week)',
-                currentTerm: 'Term (weeks)',
-                uploadTip: '💡 Upload any image to simulate sharing a loan screenshot',
-                langToggle: 'ES',
-                applyRestart: 'Apply & Restart'
+                langToggle: 'ES'
             },
             es: {
                 title: 'Tala',
                 subtitle: 'Tu aliado financiero',
                 reset: 'Reiniciar',
-                loansShared: 'préstamos compartidos',
                 typePlaceholder: 'Escribe un mensaje...',
-                demoTitle: '🧪 Controles del Demo',
-                customer: 'Nombre del Cliente',
-                loansCompleted: 'préstamos completados',
-                currentLimit: 'Límite Tala Actual (MXN)',
-                offeredLimit: 'Consolidación Máx',
-                currentRate: 'Tasa Tala (%/semana)',
-                currentTerm: 'Plazo (semanas)',
-                uploadTip: '💡 Sube cualquier imagen para simular compartir un préstamo',
-                langToggle: 'EN',
-                applyRestart: 'Aplicar y Reiniciar'
+                langToggle: 'EN'
             }
         };
 
-        const SYSTEM_PROMPT_EN = `You are Maya, a friendly loan advisor at Tala. You're warm, supportive, and genuinely want to help customers manage their finances better. Think of yourself as that helpful friend at a neighborhood credit cooperative - approachable, not corporate.
+        const SYSTEM_PROMPT_EN = `You are Andrea, a friendly loan advisor at Tala. You're warm, supportive, and genuinely want to help customers manage their finances better. Think of yourself as that helpful friend at a neighborhood credit cooperative - approachable, not corporate.
 
 CONTEXT:
 - The customer details will be provided (name, current Tala limit, current Tala rate, term)
@@ -259,7 +233,7 @@ CURRENCY: Always use Mexican pesos (MXN) with $ symbol, e.g., $5,000 MXN
 
 Current state will be provided in each message so you know where you are in the flow.`;
 
-        const SYSTEM_PROMPT_ES = `Eres Maya, una asesora de préstamos amigable en Tala. Eres cálida, comprensiva y genuinamente quieres ayudar a los clientes a manejar mejor sus finanzas. Piensa en ti misma como esa amiga servicial de una cooperativa de crédito del barrio - accesible, no corporativa.
+        const SYSTEM_PROMPT_ES = `Eres Andrea, una asesora de préstamos amigable en Tala. Eres cálida, comprensiva y genuinamente quieres ayudar a los clientes a manejar mejor sus finanzas. Piensa en ti misma como esa amiga servicial de una cooperativa de crédito del barrio - accesible, no corporativa.
 
 CONTEXTO:
 - Los detalles del cliente se proporcionarán (nombre, límite actual en Tala, tasa actual en Tala, plazo)
@@ -324,7 +298,7 @@ El estado actual se proporcionará en cada mensaje para que sepas dónde estás 
         // Configuration - Update this to match your backend URL
         const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             ? 'http://localhost:3000'
-            : ''; // Set to your deployed backend URL if not running locally
+            : 'https://debt-consolidation-demo-production.up.railway.app';
 
         // State management
         let messages = [];
@@ -349,26 +323,21 @@ El estado actual se proporcionará en cada mensaje para que sepas dónde estás 
             sendBtn: document.getElementById('sendBtn'),
             resetBtn: document.getElementById('resetBtn'),
             langToggle: document.getElementById('langToggle'),
-            applyRestartBtn: document.getElementById('applyRestartBtn'),
-            customerNameInput: document.getElementById('customerNameInput'),
-            currentLimitInput: document.getElementById('currentLimitInput'),
-            currentRateInput: document.getElementById('currentRateInput'),
-            currentTermInput: document.getElementById('currentTermInput'),
             title: document.getElementById('title'),
-            subtitle: document.getElementById('subtitle'),
-            demoTitle: document.getElementById('demoTitle'),
-            customerLabel: document.getElementById('customerLabel'),
-            limitLabel: document.getElementById('limitLabel'),
-            rateLabel: document.getElementById('rateLabel'),
-            termLabel: document.getElementById('termLabel'),
-            uploadTip: document.getElementById('uploadTip')
+            subtitle: document.getElementById('subtitle')
         };
 
-        // Initialize form values
-        elements.customerNameInput.value = editForm.customerName;
-        elements.currentLimitInput.value = editForm.currentLimit;
-        elements.currentRateInput.value = editForm.currentRate;
-        elements.currentTermInput.value = editForm.currentTerm;
+        // Set Andrea's image path
+        const andreaImage = document.getElementById('andreaImage');
+        if (andreaImage) {
+            if (API_URL && (window.location.protocol === 'http:' || window.location.protocol === 'https:')) {
+                // If using backend server, use the server URL
+                andreaImage.src = `${API_URL}/images/andrea.png`;
+            } else {
+                // For file:// protocol, use local images folder
+                andreaImage.src = 'images/andrea.png';
+            }
+        }
 
         // Update UI text based on language
         function updateUIText() {
@@ -377,14 +346,7 @@ El estado actual se proporcionará en cada mensaje para que sepas dónde estás 
             elements.subtitle.textContent = t.subtitle;
             elements.resetBtn.textContent = t.reset;
             elements.messageInput.placeholder = t.typePlaceholder;
-            elements.demoTitle.textContent = t.demoTitle;
-            elements.customerLabel.textContent = t.customer;
-            elements.limitLabel.textContent = t.currentLimit;
-            elements.rateLabel.textContent = t.currentRate;
-            elements.termLabel.textContent = t.currentTerm;
-            elements.uploadTip.textContent = t.uploadTip;
             elements.langToggle.textContent = t.langToggle;
-            elements.applyRestartBtn.textContent = t.applyRestart;
         }
 
         // Render messages
@@ -400,7 +362,7 @@ El estado actual se proporcionará en cada mensaje para que sepas dónde estás 
                 
                 if (msg.image) {
                     const imgDiv = document.createElement('div');
-                    imgDiv.className = 'mb-1 rounded-xl overflow-hidden border-2 border-teal-200';
+                    imgDiv.className = 'mb-1 rounded-xl overflow-hidden border-2 border-gray-200';
                     const img = document.createElement('img');
                     img.src = msg.image;
                     img.alt = 'Uploaded loan';
@@ -412,8 +374,8 @@ El estado actual se proporcionará en cada mensaje para que sepas dónde estás 
                 const textDiv = document.createElement('div');
                 textDiv.className = `px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
                     msg.role === 'user' 
-                        ? 'bg-teal-500 text-white rounded-br-md' 
-                        : 'bg-white text-gray-700 rounded-bl-md shadow-sm border border-gray-100'
+                        ? 'bg-[#FF6B35] text-white rounded-br-md shadow-sm' 
+                        : 'bg-white text-gray-700 rounded-bl-md shadow-sm border border-gray-200'
                 }`;
                 textDiv.textContent = msg.content;
                 contentDiv.appendChild(textDiv);
@@ -426,11 +388,11 @@ El estado actual se proporcionará en cada mensaje para que sepas dónde estás 
                 const loadingDiv = document.createElement('div');
                 loadingDiv.className = 'flex justify-start';
                 loadingDiv.innerHTML = `
-                    <div class="bg-white px-4 py-3 rounded-2xl rounded-bl-md shadow-sm border border-gray-100">
+                    <div class="bg-white px-4 py-3 rounded-2xl rounded-bl-md shadow-sm border border-gray-200">
                         <div class="flex gap-1">
-                            <div class="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
-                            <div class="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
-                            <div class="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
+                            <div class="w-2 h-2 bg-[#FF6B35] rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
+                            <div class="w-2 h-2 bg-[#FF6B35] rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
+                            <div class="w-2 h-2 bg-[#FF6B35] rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
                         </div>
                     </div>
                 `;
@@ -455,8 +417,8 @@ El estado actual se proporcionará en cada mensaje para que sepas dónde estás 
             renderMessages();
             
             const fallback = lang === 'es' 
-                ? `¡Hola ${state.customerName}! 👋 Qué gusto que aceptaste esta oportunidad. Soy Maya de Tala, y estoy aquí para ayudarte a desbloquear tu nuevo límite de $${state.newLimit.toLocaleString()} MXN. Solo necesitamos revisar algunos préstamos que tengas con otras apps. ¿Lista para empezar?`
-                : `Hey ${state.customerName}! 👋 So glad you opted in for this opportunity. I'm Maya from Tala, and I'm here to help you unlock your new $${state.newLimit.toLocaleString()} MXN limit. We just need to review a few loans you have with other apps. Ready to get started?`;
+                ? `¡Hola ${state.customerName}! 👋 Qué gusto que aceptaste esta oportunidad. Soy Andrea de Tala, y estoy aquí para ayudarte a desbloquear tu nuevo límite de $${state.newLimit.toLocaleString()} MXN. Solo necesitamos revisar algunos préstamos que tengas con otras apps. ¿Lista para empezar?`
+                : `Hey ${state.customerName}! 👋 So glad you opted in for this opportunity. I'm Andrea from Tala, and I'm here to help you unlock your new $${state.newLimit.toLocaleString()} MXN limit. We just need to review a few loans you have with other apps. Ready to get started?`;
             
             try {
                 const response = await fetch(`${API_URL}/api/chat`, {
@@ -465,7 +427,7 @@ El estado actual se proporcionará en cada mensaje para que sepas dónde estás 
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        model: 'claude-sonnet-4-20250514',
+                        model: 'gpt-4o',
                         max_tokens: 500,
                         system: prompt,
                         messages: [{
@@ -538,7 +500,7 @@ El estado actual se proporcionará en cada mensaje para que sepas dónde estás 
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        model: 'claude-sonnet-4-20250514',
+                        model: 'gpt-4o',
                         max_tokens: 500,
                         system: systemPrompt,
                         messages: apiMessages,
@@ -618,26 +580,6 @@ El estado actual se proporcionará en cada mensaje para que sepas dónde estás 
             }, 100);
         });
 
-        elements.applyRestartBtn.addEventListener('click', () => {
-            const newState = {
-                ...INITIAL_STATE,
-                customerName: elements.customerNameInput.value,
-                currentLimit: Number(elements.currentLimitInput.value),
-                currentRate: Number(elements.currentRateInput.value),
-                currentTerm: Number(elements.currentTermInput.value),
-                newLimit: Math.round(Number(elements.currentLimitInput.value) * 5)
-            };
-            flowState = newState;
-            editForm = {
-                customerName: newState.customerName,
-                currentLimit: newState.currentLimit,
-                currentRate: newState.currentRate,
-                currentTerm: newState.currentTerm
-            };
-            messages = [];
-            uploadedImages = [];
-            setTimeout(() => startConversationWithState(language, newState), 100);
-        });
 
         // Initialize
         updateUIText();

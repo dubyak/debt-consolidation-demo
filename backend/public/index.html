@@ -21,16 +21,63 @@
             font-family: monospace;
             font-size: 0.75rem;
         }
+        /* Design System Colors */
+        :root {
+            --orange-primary: #FF6B35;
+            --orange-hover: #E55A2B;
+            --light-blue: #E3F2FD;
+            --blue-accent: #2196F3;
+            --dark-grey: #2D2D2D;
+            --light-grey-bg: #F5F5F5;
+        }
+        .btn-primary {
+            background-color: var(--orange-primary);
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: var(--orange-hover);
+        }
+        .progress-bar {
+            background-color: var(--light-blue);
+            height: 4px;
+            border-radius: 2px;
+        }
+        .progress-fill {
+            background-color: var(--blue-accent);
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
     </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'orange-primary': '#FF6B35',
+                        'orange-hover': '#E55A2B',
+                        'light-blue': '#E3F2FD',
+                        'blue-accent': '#2196F3',
+                        'dark-grey': '#2D2D2D',
+                    }
+                }
+            }
+        }
+    </script>
 </head>
 <body>
-    <div id="app" class="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex flex-col items-center justify-center p-4">
+    <div id="app" class="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
         <!-- Password Protection Modal -->
         <div id="passwordModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
                 <div class="text-center mb-6">
-                    <div class="w-16 h-16 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 flex items-center justify-center mx-auto mb-4">
-                        <span class="text-3xl">🌿</span>
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 flex items-center justify-center mx-auto mb-4 overflow-hidden">
+                        <img src="images/andrea.png" alt="Andrea" class="w-full h-full object-cover rounded-full" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <span class="text-3xl" style="display:none;">👩‍💼</span>
                     </div>
                     <h2 class="text-2xl font-bold text-gray-800 mb-2">Tala Demo</h2>
                     <p class="text-sm text-gray-600">Enter your credentials to access</p>
@@ -42,7 +89,7 @@
                             type="text"
                             id="usernameInput"
                             placeholder="Enter username"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20 focus:border-[#FF6B35]"
                             autocomplete="username"
                         />
                     </div>
@@ -52,14 +99,14 @@
                             type="password"
                             id="passwordInput"
                             placeholder="Enter password"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20 focus:border-[#FF6B35]"
                             autocomplete="current-password"
                         />
                     </div>
                     <div id="loginError" class="text-red-500 text-xs text-center hidden"></div>
                     <button
                         type="submit"
-                        class="w-full px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg font-semibold transition-colors"
+                        class="w-full px-4 py-2 bg-[#FF6B35] hover:bg-[#E55A2B] text-white rounded-lg font-semibold transition-colors shadow-sm"
                     >
                         Access Demo
                     </button>
@@ -80,24 +127,28 @@
             </div>
             
             <!-- Header -->
-            <div class="bg-gradient-to-r from-teal-500 to-emerald-500 px-4 py-4 flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                    <span class="text-xl">🌿</span>
+            <div class="bg-gradient-to-r from-emerald-400 to-teal-500 px-4 py-4 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center overflow-hidden">
+                    <img src="images/andrea.png" alt="Andrea" class="w-full h-full object-cover rounded-full" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <span class="text-xl" style="display:none;">👩‍💼</span>
                 </div>
-                <div class="flex-1">
-                    <h1 id="title" class="text-white font-semibold text-lg tracking-tight">Tala</h1>
-                    <p id="subtitle" class="text-teal-100 text-xs">Tu aliado financiero</p>
+                <div class="flex-1 flex items-center gap-2">
+                    <div>
+                        <h1 id="title" class="text-white font-semibold text-lg tracking-tight">Tala</h1>
+                        <p id="subtitle" class="text-white/90 text-xs">Tu aliado financiero</p>
+                    </div>
+                    <img src="https://www.tala.co/wp-content/uploads/2021/06/tala-logo-white.svg" alt="Tala Logo" class="h-5 opacity-90" onerror="this.style.display='none';">
                 </div>
                 <div class="flex items-center gap-2">
                     <button 
                         id="langToggle"
-                        class="px-2 py-1 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors"
+                        class="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors"
                     >
                         EN
                     </button>
                     <button 
                         id="resetBtn"
-                        class="text-white/70 hover:text-white text-xs underline"
+                        class="text-white/80 hover:text-white text-xs underline"
                     >
                         Reiniciar
                     </button>
@@ -105,7 +156,7 @@
             </div>
 
             <!-- Messages Area -->
-            <div id="messagesArea" class="h-96 overflow-y-auto p-4 space-y-3 bg-gray-50">
+            <div id="messagesArea" class="h-96 overflow-y-auto p-4 space-y-3 bg-white">
                 <!-- Messages will be inserted here -->
             </div>
 
@@ -115,7 +166,7 @@
                     <button
                         type="button"
                         id="imageBtn"
-                        class="w-10 h-10 rounded-full bg-teal-100 hover:bg-teal-200 flex items-center justify-center text-teal-600 transition-colors flex-shrink-0"
+                        class="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 transition-colors flex-shrink-0"
                     >
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -131,66 +182,18 @@
                         type="text"
                         id="messageInput"
                         placeholder="Escribe un mensaje..."
-                        class="flex-1 bg-gray-100 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
+                        class="flex-1 bg-gray-100 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20 transition-all"
                     />
                     <button
                         type="submit"
                         id="sendBtn"
-                        class="w-10 h-10 rounded-full bg-teal-500 hover:bg-teal-600 disabled:bg-gray-300 flex items-center justify-center text-white transition-colors flex-shrink-0"
+                        class="w-10 h-10 rounded-full bg-[#FF6B35] hover:bg-[#E55A2B] disabled:bg-gray-300 flex items-center justify-center text-white transition-colors flex-shrink-0"
                     >
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                         </svg>
                     </button>
                 </form>
-            </div>
-        </div>
-
-        <!-- Settings Panel -->
-        <div class="mt-6 max-w-sm w-full bg-white/90 backdrop-blur rounded-xl p-4 shadow-lg">
-            <h2 id="demoTitle" class="font-bold text-teal-800 mb-3 text-sm">🧪 Configuración</h2>
-            <div class="space-y-3">
-                <div>
-                    <label id="customerLabel" class="text-xs text-gray-500 block mb-1">Nombre del Cliente</label>
-                    <input
-                        type="text"
-                        id="customerNameInput"
-                        class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300"
-                    />
-                </div>
-                <div class="grid grid-cols-3 gap-2">
-                    <div>
-                        <label id="limitLabel" class="text-xs text-gray-500 block mb-1">Límite Tala (MXN)</label>
-                        <input
-                            type="number"
-                            id="currentLimitInput"
-                            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300"
-                        />
-                    </div>
-                    <div>
-                        <label id="rateLabel" class="text-xs text-gray-500 block mb-1">Tasa (%/semana)</label>
-                        <input
-                            type="number"
-                            step="0.1"
-                            id="currentRateInput"
-                            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300"
-                        />
-                    </div>
-                    <div>
-                        <label id="termLabel" class="text-xs text-gray-500 block mb-1">Plazo (meses)</label>
-                        <input
-                            type="number"
-                            id="currentTermInput"
-                            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300"
-                        />
-                    </div>
-                </div>
-                <button
-                    id="applyRestartBtn"
-                    class="w-full px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white text-xs font-semibold rounded-lg transition-colors"
-                >
-                    Aplicar y Reiniciar
-                </button>
             </div>
         </div>
     </div>
@@ -202,38 +205,28 @@
                 subtitle: 'Your loan buddy',
                 reset: 'Reset',
                 typePlaceholder: 'Type a message...',
-                demoTitle: '🧪 Settings',
-                customer: 'Customer Name',
-                currentLimit: 'Tala Limit (MXN)',
-                currentRate: 'Rate (%/week)',
-                currentTerm: 'Term (months)',
-                langToggle: 'ES',
-                applyRestart: 'Apply & Restart',
-                changeKey: 'Change'
+                langToggle: 'ES'
             },
             es: {
                 title: 'Tala',
                 subtitle: 'Tu aliado financiero',
                 reset: 'Reiniciar',
                 typePlaceholder: 'Escribe un mensaje...',
-                demoTitle: '🧪 Configuración',
-                customer: 'Nombre del Cliente',
-                currentLimit: 'Límite Tala (MXN)',
-                currentRate: 'Tasa (%/semana)',
-                currentTerm: 'Plazo (meses)',
-                langToggle: 'EN',
-                applyRestart: 'Aplicar y Reiniciar',
-                changeKey: 'Cambiar'
+                langToggle: 'EN'
             }
         };
 
         // Customer profile defaults
         const DEFAULT_PROFILE = {
-            customerName: 'María',
-            currentLimit: 3000,
-            currentRate: 4.5,
-            currentTerm: 1
+            customerName: 'María'
         };
+
+        // Fallback loan data based on demo screenshots (used if extraction fails)
+        const FALLBACK_LOANS = [
+            { lender: 'Elektra', balance: 1050, rate: 16, rateType: 'monthly', paymentFrequency: 'biweekly' },
+            { lender: 'DiDi', balance: 5290.50, rate: 20, rateType: 'monthly', paymentFrequency: 'biweekly' },
+            { lender: 'BBVA', balance: 2000.50, rate: 30, rateType: 'monthly', paymentFrequency: 'biweekly' }
+        ];
 
         // Configuration - Railway backend URL (use same origin when served from backend)
         const BACKEND_URL = window.location.origin;
@@ -250,35 +243,34 @@
         let isLoading = false;
         let customerProfile = { ...DEFAULT_PROFILE };
         let isAuthenticated = false;
-
-        // No longer needed - backend handles API keys
-        // Keeping for backward compatibility but will be removed
+        let extractedLoans = []; // Track loans extracted from screenshots
+        let loanExtractionAttempts = 0; // Track failed extraction attempts
+        let upsellOffered = false; // Track if upsell has been offered
+        let upsellAccepted = false; // Track if customer accepted the upsell
 
         // Build system prompt with customer info
         function buildSystemPrompt() {
-            const lang = language === 'es' ? 'ES' : 'EN';
             const customerInfo = language === 'es'
-                ? `Nombre: ${customerProfile.customerName}, Límite actual en Tala: $${customerProfile.currentLimit.toLocaleString()} MXN, Tasa Tala: ${customerProfile.currentRate}%/semana, Plazo: ${customerProfile.currentTerm} meses`
-                : `Name: ${customerProfile.customerName}, Current Tala limit: $${customerProfile.currentLimit.toLocaleString()} MXN, Tala rate: ${customerProfile.currentRate}%/week, Term: ${customerProfile.currentTerm} months`;
+                ? `Nombre: ${customerProfile.customerName}`
+                : `Name: ${customerProfile.customerName}`;
 
             const basePrompt = language === 'es' ? SYSTEM_PROMPT_ES : SYSTEM_PROMPT_EN;
-            return `${basePrompt}\n\nCUSTOMER PROFILE:\n${customerInfo}\n\nIMPORTANT: Track the conversation flow naturally. When the customer shares loan screenshots, analyze them and extract: lender name, outstanding balance, and interest rate. After collecting 3+ loans, present the consolidation offer with calculations.`;
+            return `${basePrompt}\n\nCUSTOMER PROFILE:\n${customerInfo}\n\nIMPORTANT: When extracting loan data from images, you MUST respond with structured JSON. Track the conversation flow naturally.`;
         }
 
-        const SYSTEM_PROMPT_EN = `You are Maya, a friendly loan advisor at Tala. You're warm, supportive, and genuinely want to help customers manage their finances better. Think of yourself as that helpful friend at a neighborhood credit cooperative - approachable, not corporate.
+        const SYSTEM_PROMPT_EN = `You are Andrea, a friendly loan advisor at Tala. You're warm, supportive, and genuinely want to help customers manage their finances better. Think of yourself as that helpful friend at a neighborhood credit cooperative - approachable, not corporate.
 
 CONTEXT:
-- The customer details will be provided (name, current Tala limit, current Tala rate, term)
-- They have completed 5 loans successfully with Tala
+- The customer has completed 5 loans successfully with Tala and has paid off their current Tala loan
 - They have ALREADY OPTED IN to this special opportunity - they're interested and ready to proceed
-- This is a debt consolidation product - ONE loan to replace all their other loans
+- This is a debt consolidation product - ONE loan to replace all their OTHER loans (NOT including Tala)
+- IMPORTANT: Tala loan is EXCLUDED from consolidation - customer has already paid it off
 
 CONSOLIDATION LOAN LOGIC:
-- We offer ONE consolidation loan that pays off ALL their other loans (including any outstanding Tala balance)
-- The consolidation loan limit = total of all their outstanding loans, UP TO A MAX OF $15,000 MXN
-- The consolidation loan rate = WEIGHTED AVERAGE of all their loan rates (including Tala's rate)
+- We offer ONE consolidation loan that pays off ALL their other loans (EXCLUDING Tala - they've paid it off)
+- The consolidation loan limit = total of all their OTHER outstanding loans, UP TO A MAX OF $15,000 MXN
+- The consolidation loan rate = WEIGHTED AVERAGE of all their OTHER loan rates (Tala is NOT included)
 - This means: if they have expensive loans elsewhere, consolidating brings their blended rate DOWN
-- Show them the math: "Your current loans average X% interest. With consolidation, you get one simple payment at Y% - that's Z pesos saved per week!"
 
 YOUR PERSONALITY:
 - Warm and conversational, like talking to a trusted neighbor
@@ -291,46 +283,51 @@ YOUR PERSONALITY:
 
 FLOW TO FOLLOW (they've already opted in, so skip the pitch):
 1. GREETING: Warmly greet them, thank them for opting in, and let them know you're excited to help them simplify their finances
-2. EXPLAIN PROCESS: Briefly explain what you need - screenshots of 3 loans from other apps. Keep it simple and reassuring.
-3. COLLECTION: Guide them through sharing screenshots one at a time. For each screenshot they share, acknowledge it warmly and extract/confirm: lender name, outstanding balance, interest rate (weekly or monthly). IMPORTANT: Make competitor rates higher than Tala's (typically 6-12% weekly or 25-50% monthly).
-4. SUMMARY & OFFER: After 3+ loans shared, present the consolidation offer in a clear, structured way:
-   - Start with a brief intro: "Perfect! Now let me show you your consolidation offer."
-   - List all loans clearly: Tala + the ones they shared (lender, balance, rate) - use simple formatting, one loan per line
-   - Calculate TOTAL outstanding balance (cap at $15,000 MXN if higher)
-   - Calculate the WEIGHTED AVERAGE rate across all loans - show the math clearly
-   - Present the consolidation offer: ONE loan for the total amount at the blended rate
-   - Emphasize benefits: "Instead of juggling 4 different payments at different rates, you get ONE payment, ONE due date, and a lower blended rate of X%"
-   - Calculate weekly/monthly savings in pesos - make this prominent
-   - Use clear structure: separate sections with line breaks, use bold for key numbers, keep it scannable
-5. APPROVAL: Confirm they're approved! The consolidation loan will pay off their other loans directly. One simple payment going forward.
+2. EXPLAIN PROCESS: Briefly explain what you need - screenshots of their loans from other apps. They can share as many loans as they have. Keep it simple and reassuring.
+3. COLLECTION: Guide them through sharing screenshots one at a time. For each screenshot they share:
+   - Acknowledge it warmly
+   - Analyze the image and extract loan details
+   - CRITICAL: After analyzing, you MUST respond with BOTH:
+     a) A friendly confirmation message (2-3 sentences) that includes asking if they have more loans to share (e.g., "Perfect! I've got that one. Do you have any other loans you'd like to include?")
+     b) A JSON object with the extracted loan data in this EXACT format:
+        {"loan": {"lender": "Lender Name", "balance": 1234.56, "rate": 16.0, "rateType": "monthly", "paymentFrequency": "biweekly"}}
+   - If you cannot clearly extract the data from the image, respond with: {"loan": null, "error": "Could not extract loan details"} AND ask them to either:
+     * Share another clearer screenshot that shows the lender name, outstanding balance, and interest rate
+     * Or provide the details manually (lender name, balance, and interest rate)
+   - If they provide loan details manually via text, extract the information and respond with the same JSON format, and ask if they have more loans
+   - IMPORTANT: Competitor rates should be HIGHER (typically 6-12% weekly or 25-50% monthly)
+   - IMPORTANT: After each loan, ask if they have more loans to share. Only proceed to show the offer when they indicate they're done (e.g., "that's all", "no more", "I'm done")
+4. COLLECTION CONTINUES: After each loan is shared, acknowledge it warmly and ask if they have more loans to share. Keep collecting until they indicate they're done (e.g., "that's all", "no more", "I'm done", "that's everything").
+5. SUMMARY: When the customer indicates they're done sharing loans, provide a brief summary of all the loans they've shared. List each loan with lender name, balance, and interest rate. Also mention the total balance and total interest they're currently paying across all loans. Keep this summary brief (3-4 sentences).
+6. SUMMARY & OFFER: After your summary, the system will automatically present the consolidation offer with detailed calculations. The offer will include an additional opportunity for 10% more at the same rate. DO NOT calculate or present the offer yourself - just provide the summary and let the system show the offer.
+7. UPSELL HANDLING: After the system shows the offer with the additional 10% opportunity, wait for the customer's response. If they say yes/accept, the system will show an updated offer. If they decline or don't respond clearly, acknowledge and proceed with the original offer.
+8. APPROVAL: After the final offer is shown (whether with or without the additional 10%), confirm they're approved! The consolidation loan will pay off their other loans directly. One simple payment going forward.
 
 IMPORTANT BEHAVIORS:
-- When they share an image, analyze it and extract realistic loan details. Use Mexican lender names like: Kueski, Stori, Nu México, Mercado Crédito, Creditea, Dineria, Konfío, Credilikeme, Moneyman, or Cashclick
-- CRITICAL: Competitor rates should be HIGHER than Tala's rate (from customer profile). This makes the weighted average attractive.
-- Keep responses SHORT - 2-3 sentences max usually, EXCEPT for the final summary where you show the full consolidation math
-- When presenting the consolidation offer, use clear structure: separate sections with line breaks, bold key numbers, make it easy to scan
-- Avoid heavy markdown formatting - use simple bold (**text**) and line breaks for structure
+- When they share an image, analyze it and extract realistic loan details. Use Mexican lender names like: Elektra, DiDi, BBVA, Kueski, Stori, Nu México, Mercado Crédito, Creditea, Dineria, Konfío, Credilikeme, Moneyman, or Cashclick
+- CRITICAL: After extracting loan data from an image, ALWAYS include a JSON object in your response with the structured data
+- Keep responses SHORT - 2-3 sentences max usually
 - They already opted in, so don't re-pitch or ask if they're interested - they ARE
 - If they seem hesitant about sharing, be reassuring about privacy/security
 - ALWAYS respond in English
 - Remember: max consolidation limit is $15,000 MXN even if their total debt is higher
+- Remember: Tala loan is EXCLUDED - customer has paid it off
 
 CURRENCY: Always use Mexican pesos (MXN) with $ symbol, e.g., $5,000 MXN`;
 
-        const SYSTEM_PROMPT_ES = `Eres Maya, una asesora de préstamos amigable en Tala. Eres cálida, comprensiva y genuinamente quieres ayudar a los clientes a manejar mejor sus finanzas. Piensa en ti misma como esa amiga servicial de una cooperativa de crédito del barrio - accesible, no corporativa.
+        const SYSTEM_PROMPT_ES = `Eres Andrea, una asesora de préstamos amigable en Tala. Eres cálida, comprensiva y genuinamente quieres ayudar a los clientes a manejar mejor sus finanzas. Piensa en ti misma como esa amiga servicial de una cooperativa de crédito del barrio - accesible, no corporativa.
 
-TU ROL:
-- Ayudar a los clientes a consolidar sus préstamos en un solo pago simple
-- Guiarlos para compartir detalles de préstamos (capturas o texto)
-- Calcular ofertas de consolidación con tasas promedio ponderadas
-- Sé empática sobre el estrés de manejar múltiples préstamos
+CONTEXTO:
+- El cliente ha completado 5 préstamos exitosamente con Tala y ya pagó su préstamo actual de Tala
+- YA ACEPTARON participar en esta oportunidad especial - están interesados y listos para continuar
+- Este es un producto de consolidación de deudas - UN préstamo para reemplazar todos sus OTROS préstamos (NO incluyendo Tala)
+- IMPORTANTE: El préstamo de Tala está EXCLUIDO de la consolidación - el cliente ya lo pagó
 
 LÓGICA DEL PRÉSTAMO DE CONSOLIDACIÓN:
-- UN préstamo de consolidación paga TODOS sus otros préstamos (incluyendo cualquier saldo pendiente de Tala)
-- Límite del préstamo de consolidación = total de todos los préstamos pendientes, HASTA UN MÁXIMO DE $15,000 MXN
-- Tasa del préstamo de consolidación = PROMEDIO PONDERADO de todas las tasas (incluyendo la de Tala)
+- Ofrecemos UN préstamo de consolidación que paga TODOS sus otros préstamos (EXCLUYENDO Tala - ya lo pagaron)
+- Límite del préstamo de consolidación = total de todos sus OTROS préstamos pendientes, HASTA UN MÁXIMO DE $15,000 MXN
+- Tasa del préstamo de consolidación = PROMEDIO PONDERADO de todas sus OTRAS tasas (Tala NO está incluida)
 - Si tienen préstamos caros en otros lados, consolidar baja su tasa combinada
-- Muéstrales las cuentas: "Tus préstamos actuales promedian X% de interés. Con la consolidación, tienes un solo pago al Y% - ¡eso son Z pesos menos por semana!"
 
 TU PERSONALIDAD:
 - Cálida y conversacional, como hablar con un vecino de confianza
@@ -343,38 +340,36 @@ TU PERSONALIDAD:
 
 FLUJO DE CONVERSACIÓN:
 1. SALUDO: Salúdalos calurosamente, agradéceles por aceptar. Ya aceptaron participar - salta el pitch.
-2. EXPLICAR PROCESO: Explica brevemente que necesitas detalles de 3 préstamos de otras apps. Pueden compartir capturas o decirte los detalles.
-3. RECOLECCIÓN: Guíalos para compartir detalles de préstamos uno por uno. Por cada préstamo:
-   - Si es una captura, analízala y extrae: nombre del prestamista, saldo pendiente, tasa de interés
-   - Si es texto, confirma los detalles con ellos
-   - Reconoce calurosamente y confirma los detalles
-   - IMPORTANTE: Las tasas de competidores deben ser MÁS ALTAS que la de Tala (típicamente 6-12% semanal o 25-50% mensual)
-4. RESUMEN Y OFERTA: Después de 3+ préstamos compartidos, presenta la oferta de consolidación de forma clara y estructurada:
-   - Empieza con una breve intro: "¡Perfecto! Ahora déjame mostrarte tu oferta de consolidación."
-   - Lista todos los préstamos claramente: Tala + los que compartieron (prestamista, saldo, tasa) - usa formato simple, un préstamo por línea
-   - Calcula el saldo TOTAL pendiente (tope en $15,000 MXN si es mayor)
-   - Calcula la tasa PROMEDIO PONDERADO de todos los préstamos - muestra las cuentas claramente
-   - Presenta la oferta de consolidación: UN préstamo por el monto total a la tasa combinada
-   - Enfatiza los beneficios: "En vez de estar batallando con múltiples pagos a diferentes tasas, tienes UN solo pago, UNA fecha de vencimiento, y una tasa combinada más baja del X%"
-   - Calcula el ahorro semanal/mensual en pesos - hazlo prominente
-   - Usa estructura clara: separa secciones con saltos de línea, usa negritas para números clave, mantenlo escaneable
-5. APROBACIÓN: ¡Confirma que están aprobados! El préstamo de consolidación pagará sus otros préstamos directamente.
+2. EXPLICAR PROCESO: Explica brevemente que necesitas detalles de sus préstamos de otras apps. Pueden compartir tantos préstamos como tengan. Pueden compartir capturas o decirte los detalles.
+3. RECOLECCIÓN: Guíalos para compartir detalles de préstamos uno por uno. Por cada captura que compartan:
+   - Reconoce calurosamente
+   - Analiza la imagen y extrae los detalles del préstamo
+   - CRÍTICO: Después de analizar, DEBES responder con AMBOS:
+     a) Un mensaje amigable de confirmación (2-3 oraciones) que incluya preguntar si tienen más préstamos para compartir (ej., "¡Perfecto! Ya tengo ese. ¿Tienes otros préstamos que quieras incluir?")
+     b) Un objeto JSON con los datos extraídos del préstamo en este formato EXACTO:
+        {"loan": {"lender": "Nombre del Prestamista", "balance": 1234.56, "rate": 16.0, "rateType": "monthly", "paymentFrequency": "biweekly"}}
+   - Si no puedes extraer claramente los datos de la imagen, responde con: {"loan": null, "error": "No se pudieron extraer los detalles del préstamo"} Y pídeles que:
+     * Compartan otra captura más clara que muestre el nombre del prestamista, saldo pendiente y tasa de interés
+     * O que te den los detalles manualmente (nombre del prestamista, saldo y tasa de interés)
+   - Si te proporcionan los detalles del préstamo manualmente por texto, extrae la información y responde con el mismo formato JSON, y pregunta si tienen más préstamos
+   - IMPORTANTE: Las tasas de competidores deben ser MÁS ALTAS (típicamente 6-12% semanal o 25-50% mensual)
+   - IMPORTANTE: Después de cada préstamo, pregunta si tienen más préstamos para compartir. Solo procede a mostrar la oferta cuando indiquen que terminaron (ej., "eso es todo", "no más", "ya terminé")
+4. RECOLECCIÓN CONTINÚA: Después de cada préstamo compartido, reconócelo calurosamente y pregunta si tienen más préstamos para compartir. Sigue recolectando hasta que indiquen que terminaron (ej., "eso es todo", "no más", "ya terminé", "eso es todo lo que tengo").
+5. RESUMEN: Cuando el cliente indique que terminó de compartir préstamos, proporciona un breve resumen de todos los préstamos que compartieron. Lista cada préstamo con nombre del prestamista, saldo y tasa de interés. También menciona el saldo total y el interés total que están pagando actualmente en todos los préstamos. Mantén este resumen breve (3-4 oraciones).
+6. RESUMEN Y OFERTA: Después de tu resumen, el sistema presentará automáticamente la oferta de consolidación con cálculos detallados. NO calcules ni presentes la oferta tú misma - solo proporciona el resumen y deja que el sistema muestre la oferta.
+7. APROBACIÓN: Después de que el sistema muestre la oferta, ¡confirma que están aprobados! El préstamo de consolidación pagará sus otros préstamos directamente.
 
 COMPORTAMIENTOS IMPORTANTES:
-- Cuando compartan una imagen, analízala y extrae detalles realistas del préstamo
-- Usa nombres de prestamistas mexicanos como: Kueski, Stori, Nu México, Mercado Crédito, Creditea, Dineria, Konfío, Credilikeme, Moneyman, o Cashclick
-- CRÍTICO: Las tasas de competidores deben ser MÁS ALTAS que la tasa de Tala para hacer la consolidación atractiva
-- Mantén las respuestas CORTAS - 2-3 oraciones máximo usualmente, EXCEPTO para el resumen final donde muestras todas las cuentas
-- Al presentar la oferta de consolidación, usa estructura clara: separa secciones con saltos de línea, usa negritas para números clave, mantenlo fácil de escanear
-- Evita formato markdown pesado - usa negritas simples (**texto**) y saltos de línea para estructura
+- Cuando compartan una imagen, analízala y extrae detalles realistas del préstamo. Usa nombres de prestamistas mexicanos como: Elektra, DiDi, BBVA, Kueski, Stori, Nu México, Mercado Crédito, Creditea, Dineria, Konfío, Credilikeme, Moneyman, o Cashclick
+- CRÍTICO: Después de extraer datos de un préstamo de una imagen, SIEMPRE incluye un objeto JSON en tu respuesta con los datos estructurados
+- Mantén las respuestas CORTAS - 2-3 oraciones máximo usualmente
 - Ya aceptaron participar, así que no vuelvas a hacer pitch ni preguntes si están interesados
 - Si parecen dudosos, sé tranquilizadora sobre privacidad/seguridad
 - SIEMPRE responde en español mexicano natural
 - Recuerda: el límite máximo de consolidación es $15,000 MXN aunque su deuda total sea mayor
+- Recuerda: El préstamo de Tala está EXCLUIDO - el cliente ya lo pagó
 
-MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN
-
-Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándote en lo que se ha discutido.`;
+MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
 
         // DOM elements
         const elements = {
@@ -386,25 +381,9 @@ Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándo
             sendBtn: document.getElementById('sendBtn'),
             resetBtn: document.getElementById('resetBtn'),
             langToggle: document.getElementById('langToggle'),
-            applyRestartBtn: document.getElementById('applyRestartBtn'),
-            customerNameInput: document.getElementById('customerNameInput'),
-            currentLimitInput: document.getElementById('currentLimitInput'),
-            currentRateInput: document.getElementById('currentRateInput'),
-            currentTermInput: document.getElementById('currentTermInput'),
             title: document.getElementById('title'),
-            subtitle: document.getElementById('subtitle'),
-            demoTitle: document.getElementById('demoTitle'),
-            customerLabel: document.getElementById('customerLabel'),
-            limitLabel: document.getElementById('limitLabel'),
-            rateLabel: document.getElementById('rateLabel'),
-            termLabel: document.getElementById('termLabel')
+            subtitle: document.getElementById('subtitle')
         };
-
-        // Initialize form values
-        elements.customerNameInput.value = customerProfile.customerName;
-        elements.currentLimitInput.value = customerProfile.currentLimit;
-        elements.currentRateInput.value = customerProfile.currentRate;
-        elements.currentTermInput.value = customerProfile.currentTerm;
 
         // Check authentication
         checkAuthentication();
@@ -447,13 +426,309 @@ Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándo
             elements.subtitle.textContent = t.subtitle;
             elements.resetBtn.textContent = t.reset;
             elements.messageInput.placeholder = t.typePlaceholder;
-            elements.demoTitle.textContent = t.demoTitle;
-            elements.customerLabel.textContent = t.customer;
-            elements.limitLabel.textContent = t.currentLimit;
-            elements.rateLabel.textContent = t.currentRate;
-            elements.termLabel.textContent = t.currentTerm;
             elements.langToggle.textContent = t.langToggle;
-            elements.applyRestartBtn.textContent = t.applyRestart;
+        }
+
+        // Extract JSON from agent response
+        function extractLoanData(text) {
+            try {
+                // Try to find JSON object in the response
+                const jsonMatch = text.match(/\{[\s\S]*"loan"[\s\S]*\}/);
+                if (jsonMatch) {
+                    const parsed = JSON.parse(jsonMatch[0]);
+                    return parsed.loan;
+                }
+            } catch (e) {
+                console.warn('Failed to parse loan data from response:', e);
+            }
+            return null;
+        }
+
+        // Try to extract loan details from manual text input
+        function extractLoanFromText(text) {
+            // This is a simple pattern matcher - the agent should handle this better
+            // But we can try to extract if user provides structured info
+            const lenderMatch = text.match(/(?:lender|prestamista|banco|app):\s*([A-Za-z\s]+)/i);
+            const balanceMatch = text.match(/(?:balance|saldo|monto):\s*\$?([\d,]+\.?\d*)/i);
+            const rateMatch = text.match(/(?:rate|tasa|interés):\s*([\d.]+)%/i);
+            
+            if (lenderMatch && balanceMatch && rateMatch) {
+                return {
+                    lender: lenderMatch[1].trim(),
+                    balance: parseFloat(balanceMatch[1].replace(/,/g, '')),
+                    rate: parseFloat(rateMatch[1]),
+                    rateType: text.toLowerCase().includes('mensual') || text.toLowerCase().includes('monthly') ? 'monthly' : 'weekly',
+                    paymentFrequency: 'biweekly' // Default
+                };
+            }
+            return null;
+        }
+
+        // Convert monthly rate to weekly rate
+        function monthlyToWeekly(monthlyRate) {
+            return monthlyRate / 4.33; // Approximate weeks per month
+        }
+
+        // Calculate weighted average rate (all rates converted to weekly)
+        function calculateWeightedAverageRate(loans) {
+            if (loans.length === 0) return 0;
+            
+            let totalWeightedRate = 0;
+            let totalBalance = 0;
+            
+            loans.forEach(loan => {
+                const weeklyRate = loan.rateType === 'monthly' 
+                    ? monthlyToWeekly(loan.rate) 
+                    : loan.rate;
+                totalWeightedRate += loan.balance * weeklyRate;
+                totalBalance += loan.balance;
+            });
+            
+            return totalBalance > 0 ? totalWeightedRate / totalBalance : 0;
+        }
+
+        // Calculate amortized weekly payment
+        function calculateAmortizedWeeklyPayment(principal, weeklyRatePercent, numWeeks) {
+            const r = weeklyRatePercent / 100; // Convert to decimal
+            if (r === 0) return principal / numWeeks; // No interest case
+            
+            const numerator = r * Math.pow(1 + r, numWeeks);
+            const denominator = Math.pow(1 + r, numWeeks) - 1;
+            return principal * (numerator / denominator);
+        }
+
+        // Calculate weekly rate needed to achieve target monthly payment (8 month term, amortized)
+        function calculateRateForTargetPayment(principal, targetMonthlyPayment, numMonths = 8) {
+            const numWeeks = numMonths * 4.33; // 8 months = ~34.64 weeks
+            const targetWeeklyPayment = targetMonthlyPayment / 4.33;
+            
+            // Binary search for the rate
+            let low = 0;
+            let high = 20; // Max 20% weekly rate
+            let bestRate = 0;
+            const tolerance = 0.01; // 0.01% precision
+            
+            while (high - low > tolerance) {
+                const mid = (low + high) / 2;
+                const weeklyPayment = calculateAmortizedWeeklyPayment(principal, mid, numWeeks);
+                
+                if (weeklyPayment <= targetWeeklyPayment) {
+                    bestRate = mid;
+                    high = mid;
+                } else {
+                    low = mid;
+                }
+            }
+            
+            return bestRate;
+        }
+
+        // Calculate current total monthly payment across all loans (amortized estimate)
+        function calculateCurrentMonthlyPayment(loans) {
+            return loans.reduce((sum, loan) => {
+                // Estimate monthly payment using amortization
+                // Assume 3 month term for existing loans (typical short-term loans)
+                const numWeeks = 3 * 4.33; // ~13 weeks
+                
+                if (loan.rateType === 'monthly') {
+                    const weeklyRate = monthlyToWeekly(loan.rate);
+                    const weeklyPayment = calculateAmortizedWeeklyPayment(loan.balance, weeklyRate, numWeeks);
+                    return sum + (weeklyPayment * 4.33); // Convert to monthly
+                } else {
+                    const weeklyPayment = calculateAmortizedWeeklyPayment(loan.balance, loan.rate, numWeeks);
+                    return sum + (weeklyPayment * 4.33); // Convert to monthly
+                }
+            }, 0);
+        }
+
+        // Calculate consolidation offer (8 month term, amortized, 20% payment reduction)
+        function calculateConsolidationOffer(loans, includeAdditional10Percent = false) {
+            if (loans.length === 0) return null;
+            
+            const baseBalance = Math.min(
+                loans.reduce((sum, loan) => sum + loan.balance, 0),
+                15000 // Max consolidation limit
+            );
+            
+            // Add 10% if requested
+            const totalBalance = includeAdditional10Percent 
+                ? Math.min(baseBalance * 1.1, 15000) 
+                : baseBalance;
+            
+            const numMonths = 8;
+            const numWeeks = numMonths * 4.33; // ~34.64 weeks
+            
+            // Calculate current total monthly payment
+            const currentMonthlyPayment = calculateCurrentMonthlyPayment(loans);
+            
+            // Target: 20% reduction in monthly payment
+            const targetMonthlyPayment = currentMonthlyPayment * 0.8;
+            
+            // Calculate weekly rate needed to achieve target payment (amortized over 8 months)
+            const weeklyRate = calculateRateForTargetPayment(totalBalance, targetMonthlyPayment, numMonths);
+            
+            // Calculate new weekly and monthly payments
+            const newWeeklyPayment = calculateAmortizedWeeklyPayment(totalBalance, weeklyRate, numWeeks);
+            const newMonthlyPayment = newWeeklyPayment * 4.33;
+            
+            // Calculate current total weekly interest (simple interest estimate)
+            const currentWeeklyInterest = loans.reduce((sum, loan) => {
+                const weeklyRate = loan.rateType === 'monthly' 
+                    ? monthlyToWeekly(loan.rate) 
+                    : loan.rate;
+                return sum + (loan.balance * weeklyRate / 100);
+            }, 0);
+            
+            // Calculate new weekly interest (first week, will decrease over time with amortization)
+            const newWeeklyInterest = totalBalance * weeklyRate / 100;
+            
+            // Calculate monthly interest
+            const currentMonthlyInterest = currentWeeklyInterest * 4.33;
+            const newMonthlyInterest = newWeeklyInterest * 4.33;
+            const monthlyInterestSavings = currentMonthlyInterest - newMonthlyInterest;
+            
+            // Calculate total interest over 8 months
+            // Total paid = monthly payment * 8 months
+            const totalPaidCurrent = currentMonthlyPayment * numMonths;
+            const totalPaidNew = newMonthlyPayment * numMonths;
+            const totalInterestCurrent = totalPaidCurrent - baseBalance;
+            const totalInterestNew = totalPaidNew - totalBalance;
+            const totalInterestSavings = totalInterestCurrent - totalInterestNew;
+            
+            // Calculate payment savings
+            const monthlyPaymentSavings = currentMonthlyPayment - newMonthlyPayment;
+            const totalPaymentSavings = monthlyPaymentSavings * numMonths;
+            
+            // Get weighted average for comparison
+            const weightedRate = calculateWeightedAverageRate(loans);
+            
+            return {
+                totalBalance,
+                baseBalance,
+                weeklyRate,
+                weightedRate, // For comparison
+                numMonths,
+                numWeeks,
+                currentMonthlyPayment,
+                newMonthlyPayment,
+                monthlyPaymentSavings,
+                totalPaymentSavings,
+                currentMonthlyInterest,
+                newMonthlyInterest,
+                monthlyInterestSavings,
+                totalInterestCurrent,
+                totalInterestNew,
+                totalInterestSavings,
+                includeAdditional10Percent,
+                additionalAmount: includeAdditional10Percent ? (totalBalance - baseBalance) : 0
+            };
+        }
+
+        // Format consolidation offer message
+        function formatConsolidationOffer(loans, offer, showUpsell = false) {
+            if (language === 'es') {
+                let message = `**Oferta de Consolidación**\n\n`;
+                message += `**Tus préstamos actuales:**\n`;
+                loans.forEach(loan => {
+                    const rateDisplay = loan.rateType === 'monthly' 
+                        ? `${loan.rate}% mensual` 
+                        : `${loan.rate}% semanal`;
+                    message += `• ${loan.lender}: $${loan.balance.toLocaleString()} MXN a ${rateDisplay}\n`;
+                });
+                message += `\n**Tu situación actual:**\n`;
+                message += `• **Saldo total:** $${offer.baseBalance.toLocaleString()} MXN\n`;
+                message += `• **Pago mensual actual:** $${offer.currentMonthlyPayment.toFixed(2)} MXN\n`;
+                message += `• **Interés mensual actual:** $${offer.currentMonthlyInterest.toFixed(2)} MXN\n`;
+                message += `• **Tasa promedio actual:** ${offer.weightedRate.toFixed(2)}% semanal\n`;
+                message += `\n**Tu nueva oferta de consolidación:**\n`;
+                if (offer.includeAdditional10Percent) {
+                    message += `• **Monto consolidado:** $${offer.totalBalance.toLocaleString()} MXN (incluye $${offer.additionalAmount.toFixed(2)} adicionales)\n`;
+                } else {
+                    message += `• **Monto consolidado:** $${offer.totalBalance.toLocaleString()} MXN\n`;
+                }
+                message += `• **Plazo:** ${offer.numMonths} meses (amortizado)\n`;
+                message += `• **Tasa:** ${offer.weeklyRate.toFixed(2)}% semanal (más baja que tu promedio actual)\n`;
+                message += `• **Nuevo pago mensual:** $${offer.newMonthlyPayment.toFixed(2)} MXN\n`;
+                message += `\n**¡Tus ahorros:**\n`;
+                message += `• **Ahorro en pago mensual:** $${offer.monthlyPaymentSavings.toFixed(2)} MXN (${((offer.monthlyPaymentSavings / offer.currentMonthlyPayment) * 100).toFixed(1)}% menos)\n`;
+                message += `• **Ahorro en interés mensual:** $${offer.monthlyInterestSavings.toFixed(2)} MXN\n`;
+                message += `• **Ahorro total en intereses (${offer.numMonths} meses):** $${offer.totalInterestSavings.toFixed(2)} MXN\n`;
+                message += `• **Ahorro total en pagos (${offer.numMonths} meses):** $${offer.totalPaymentSavings.toFixed(2)} MXN\n\n`;
+                message += `En vez de estar batallando con ${loans.length} pagos diferentes ($${offer.currentMonthlyPayment.toFixed(2)}/mes), ahora tienes **UN solo pago** de $${offer.newMonthlyPayment.toFixed(2)}/mes.\n\n`;
+                
+                if (!showUpsell && !offer.includeAdditional10Percent) {
+                    message += `**Oportunidad adicional:**\n`;
+                    const additionalAmount = Math.min(offer.baseBalance * 0.1, 15000 - offer.baseBalance);
+                    message += `¿Te gustaría recibir un 10% adicional ($${additionalAmount.toFixed(2)} MXN) al mismo tipo de interés? Esto puede ayudarte a cubrir gastos inesperados y mantenerte alejado de otros prestamistas.\n\n`;
+                } else {
+                    message += `¡Estás aprobada! El préstamo de consolidación pagará tus otros préstamos directamente. Un solo pago simple de aquí en adelante.`;
+                }
+                return message;
+            } else {
+                let message = `**Consolidation Offer**\n\n`;
+                message += `**Your current loans:**\n`;
+                loans.forEach(loan => {
+                    const rateDisplay = loan.rateType === 'monthly' 
+                        ? `${loan.rate}% monthly` 
+                        : `${loan.rate}% weekly`;
+                    message += `• ${loan.lender}: $${loan.balance.toLocaleString()} MXN at ${rateDisplay}\n`;
+                });
+                message += `\n**Your current situation:**\n`;
+                message += `• **Total balance:** $${offer.baseBalance.toLocaleString()} MXN\n`;
+                message += `• **Current monthly payment:** $${offer.currentMonthlyPayment.toFixed(2)} MXN\n`;
+                message += `• **Current monthly interest:** $${offer.currentMonthlyInterest.toFixed(2)} MXN\n`;
+                message += `• **Current average rate:** ${offer.weightedRate.toFixed(2)}% weekly\n`;
+                message += `\n**Your new consolidation offer:**\n`;
+                if (offer.includeAdditional10Percent) {
+                    message += `• **Consolidated amount:** $${offer.totalBalance.toLocaleString()} MXN (includes $${offer.additionalAmount.toFixed(2)} additional)\n`;
+                } else {
+                    message += `• **Consolidated amount:** $${offer.totalBalance.toLocaleString()} MXN\n`;
+                }
+                message += `• **Term:** ${offer.numMonths} months (amortized)\n`;
+                message += `• **Rate:** ${offer.weeklyRate.toFixed(2)}% weekly (lower than your current average)\n`;
+                message += `• **New monthly payment:** $${offer.newMonthlyPayment.toFixed(2)} MXN\n`;
+                message += `\n**Your savings:**\n`;
+                message += `• **Monthly payment savings:** $${offer.monthlyPaymentSavings.toFixed(2)} MXN (${((offer.monthlyPaymentSavings / offer.currentMonthlyPayment) * 100).toFixed(1)}% less)\n`;
+                message += `• **Monthly interest savings:** $${offer.monthlyInterestSavings.toFixed(2)} MXN\n`;
+                message += `• **Total interest savings (${offer.numMonths} months):** $${offer.totalInterestSavings.toFixed(2)} MXN\n`;
+                message += `• **Total payment savings (${offer.numMonths} months):** $${offer.totalPaymentSavings.toFixed(2)} MXN\n\n`;
+                message += `Instead of juggling ${loans.length} different payments ($${offer.currentMonthlyPayment.toFixed(2)}/month), you now have **ONE payment** of $${offer.newMonthlyPayment.toFixed(2)}/month.\n\n`;
+                
+                if (!showUpsell && !offer.includeAdditional10Percent) {
+                    message += `**Additional opportunity:**\n`;
+                    const additionalAmount = Math.min(offer.baseBalance * 0.1, 15000 - offer.baseBalance);
+                    message += `Would you like an additional 10% ($${additionalAmount.toFixed(2)} MXN) at the same interest rate? This can help cover unexpected expenses and keep you from needing other lenders.\n\n`;
+                } else {
+                    message += `You're approved! The consolidation loan will pay off your other loans directly. One simple payment going forward.`;
+                }
+                return message;
+            }
+        }
+
+        // Use fallback loan if extraction fails
+        function useFallbackLoan(attemptIndex) {
+            if (attemptIndex < FALLBACK_LOANS.length) {
+                return { ...FALLBACK_LOANS[attemptIndex] };
+            }
+            return null;
+        }
+
+        // Check if customer indicates they're done sharing loans
+        function isDoneSharingLoans(text) {
+            if (!text) return false;
+            const lowerText = text.toLowerCase();
+            const donePhrases = [
+                'that\'s all', 'thats all', 'that is all',
+                'no more', 'no more loans', 'no more to share',
+                'i\'m done', 'im done', 'i am done', 'done',
+                'that\'s everything', 'thats everything', 'that is everything',
+                'finished', 'i\'m finished', 'im finished',
+                'all done', 'all set', 'ready to see',
+                'show me the offer', 'show the offer', 'ready for offer',
+                'eso es todo', 'no más', 'ya terminé', 'terminé',
+                'listo', 'listo para ver', 'muéstrame la oferta'
+            ];
+            return donePhrases.some(phrase => lowerText.includes(phrase));
         }
 
         // Render messages
@@ -469,7 +744,7 @@ Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándo
                 
                 if (msg.image) {
                     const imgDiv = document.createElement('div');
-                    imgDiv.className = 'mb-2 rounded-xl overflow-hidden border-2 border-teal-200 bg-gray-100';
+            imgDiv.className = 'mb-2 rounded-xl overflow-hidden border-2 border-gray-200 bg-gray-100';
                     const img = document.createElement('img');
                     img.src = msg.image;
                     img.alt = 'Uploaded loan screenshot';
@@ -482,7 +757,7 @@ Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándo
                 const textDiv = document.createElement('div');
                 textDiv.className = `px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
                     msg.role === 'user' 
-                        ? 'bg-teal-500 text-white rounded-br-md' 
+                        ? 'bg-[#FF6B35] text-white rounded-br-md shadow-sm' 
                         : 'bg-white text-gray-700 rounded-bl-md shadow-sm border border-gray-100'
                 }`;
                 
@@ -505,9 +780,9 @@ Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándo
                 loadingDiv.innerHTML = `
                     <div class="bg-white px-4 py-3 rounded-2xl rounded-bl-md shadow-sm border border-gray-100">
                         <div class="flex gap-1">
-                            <div class="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
-                            <div class="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
-                            <div class="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
+                            <div class="w-2 h-2 bg-[#FF6B35] rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
+                            <div class="w-2 h-2 bg-[#FF6B35] rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
+                            <div class="w-2 h-2 bg-[#FF6B35] rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
                         </div>
                     </div>
                 `;
@@ -521,17 +796,17 @@ Rastrea la conversación naturalmente - sabes dónde estás en el flujo basándo
         function getWelcomeMessage() {
             const name = customerProfile.customerName;
             if (language === 'es') {
-                return `¡Hola ${name}! 👋 Qué gusto que aceptaste esta oportunidad. Soy Maya de Tala, y estoy aquí para ayudarte a consolidar todos tus préstamos en uno solo.
+                return `¡Hola ${name}! 👋 Qué gusto que aceptaste esta oportunidad. Soy Andrea de Tala, y estoy aquí para ayudarte a consolidar todos tus préstamos en uno solo.
 
 En los próximos minutos, vamos a revisar tus préstamos de otras apps y te voy a mostrar cómo puedes simplificar todo en un solo pago, con una tasa más baja y menos estrés.
 
-¿Lista para empezar? Solo necesito que compartas capturas de 3 préstamos que tengas con otras apps.`;
+¿Lista para empezar? Solo necesito que compartas las capturas de tus préstamos con otras apps. Puedes compartir tantos como tengas.`;
             } else {
-                return `Hey ${name}! 👋 So glad you opted in for this opportunity. I'm Maya from Tala, and I'm here to help you consolidate all your loans into one.
+                return `Hey ${name}! 👋 So glad you opted in for this opportunity. I'm Andrea from Tala, and I'm here to help you consolidate all your loans into one.
 
 Over the next few minutes, we'll review your loans from other apps and I'll show you how you can simplify everything into one payment, with a lower rate and less stress.
 
-Ready to get started? I just need you to share screenshots of 3 loans you have with other apps.`;
+Ready to get started? I just need you to share screenshots of your loans with other apps. You can share as many as you have.`;
             }
         }
 
@@ -548,7 +823,7 @@ Ready to get started? I just need you to share screenshots of 3 loans you have w
             renderMessages();
         }
 
-        // Send message (clean - no state management)
+        // Send message with structured data extraction
         async function sendMessage(userMessage, imageData = null) {
             if (!userMessage.trim() && !imageData) return;
 
@@ -613,8 +888,78 @@ Ready to get started? I just need you to share screenshots of 3 loans you have w
 
                 const data = await response.json();
                 // Backend returns normalized format: { content: [{ text: "..." }] }
-                const assistantMessage = data.content?.[0]?.text || data.content || 'Error: Invalid response';
-                messages.push({ role: 'assistant', content: assistantMessage });
+                let assistantMessage = data.content?.[0]?.text || data.content || 'Error: Invalid response';
+                
+                // If this was an image upload, try to extract structured loan data
+                if (imageData) {
+                    const extractedLoan = extractLoanData(assistantMessage);
+                    
+                    if (extractedLoan && extractedLoan.lender && extractedLoan.balance && extractedLoan.rate) {
+                        // Successfully extracted loan data
+                        extractedLoans.push(extractedLoan);
+                        loanExtractionAttempts = 0; // Reset fallback counter
+                        
+                        // Remove JSON from the displayed message (keep only the friendly text)
+                        assistantMessage = assistantMessage.replace(/\{[\s\S]*"loan"[\s\S]*\}/, '').trim();
+                        
+                        // Just acknowledge the loan - don't show offer yet
+                        // The agent will ask if they have more loans, and only show offer when customer says they're done
+                        messages.push({ role: 'assistant', content: assistantMessage });
+                    } else {
+                        // Extraction failed - ask customer for manual details or better photo
+                        loanExtractionAttempts++;
+                        const errorMsg = language === 'es'
+                            ? 'No pude extraer claramente los detalles del préstamo de esta imagen. ¿Podrías ayudarme de una de estas formas?\n\n1. Compartir otra captura más clara que muestre el nombre del prestamista, saldo pendiente y tasa de interés\n2. O decirme los detalles manualmente: nombre del prestamista, saldo pendiente y tasa de interés'
+                            : 'I couldn\'t clearly extract the loan details from this image. Could you help me in one of these ways?\n\n1. Share another clearer screenshot that shows the lender name, outstanding balance, and interest rate\n2. Or tell me the details manually: lender name, outstanding balance, and interest rate';
+                        
+                        // Update the assistant message to include the error message
+                        assistantMessage = assistantMessage.replace(/\{[\s\S]*"loan"[\s\S]*\}/, '').trim();
+                        if (assistantMessage) {
+                            assistantMessage += '\n\n' + errorMsg;
+                        } else {
+                            assistantMessage = errorMsg;
+                        }
+                        messages.push({ role: 'assistant', content: assistantMessage });
+                    }
+                } else {
+                    // Regular text message - check if user is providing manual loan details or indicating they're done
+                    if (userMessage) {
+                        // First check if they're indicating they're done sharing loans
+                        if (isDoneSharingLoans(userMessage) && extractedLoans.length >= 1) {
+                            // Customer is done - show consolidation offer
+                            const offer = calculateConsolidationOffer(extractedLoans);
+                            if (offer) {
+                                messages.push({ role: 'assistant', content: assistantMessage });
+                                setTimeout(() => {
+                                    const offerMessage = formatConsolidationOffer(extractedLoans, offer);
+                                    messages.push({ role: 'assistant', content: offerMessage });
+                                    renderMessages();
+                                }, 500);
+                            } else {
+                                messages.push({ role: 'assistant', content: assistantMessage });
+                            }
+                        } else {
+                            // Check if they're providing manual loan details
+                            const manualLoan = extractLoanFromText(userMessage);
+                            if (manualLoan) {
+                                extractedLoans.push(manualLoan);
+                                // Acknowledge but don't show offer yet - wait for them to say they're done
+                                const ackMsg = language === 'es'
+                                    ? `¡Perfecto! Registré tu préstamo con ${manualLoan.lender}. Saldo: $${manualLoan.balance.toLocaleString()} MXN a ${manualLoan.rate}% ${manualLoan.rateType === 'monthly' ? 'mensual' : 'semanal'}.`
+                                    : `Perfect! I recorded your loan with ${manualLoan.lender}. Balance: $${manualLoan.balance.toLocaleString()} MXN at ${manualLoan.rate}% ${manualLoan.rateType === 'monthly' ? 'monthly' : 'weekly'}.`;
+                                
+                                messages.push({ role: 'assistant', content: assistantMessage });
+                                messages.push({ role: 'assistant', content: ackMsg });
+                            } else {
+                                // Regular text message, no extraction needed
+                                messages.push({ role: 'assistant', content: assistantMessage });
+                            }
+                        }
+                    } else {
+                        // Regular text message, no extraction needed
+                        messages.push({ role: 'assistant', content: assistantMessage });
+                    }
+                }
             } catch (error) {
                 console.error('Error sending message:', error);
                 const errorMsg = language === 'es' 
@@ -685,24 +1030,21 @@ Ready to get started? I just need you to share screenshots of 3 loans you have w
 
         elements.resetBtn.addEventListener('click', () => {
             messages = [];
+            extractedLoans = [];
+            loanExtractionAttempts = 0;
+            upsellOffered = false;
+            upsellAccepted = false;
             startConversation();
         });
 
         elements.langToggle.addEventListener('click', () => {
             language = language === 'es' ? 'en' : 'es';
             messages = [];
+            extractedLoans = [];
+            loanExtractionAttempts = 0;
+            upsellOffered = false;
+            upsellAccepted = false;
             updateUIText();
-            startConversation();
-        });
-
-        elements.applyRestartBtn.addEventListener('click', () => {
-            customerProfile = {
-                customerName: elements.customerNameInput.value,
-                currentLimit: Number(elements.currentLimitInput.value),
-                currentRate: Number(elements.currentRateInput.value),
-                currentTerm: Number(elements.currentTermInput.value)
-            };
-            messages = [];
             startConversation();
         });
 
