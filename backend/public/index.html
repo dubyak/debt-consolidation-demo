@@ -294,10 +294,11 @@ FLOW TO FOLLOW (they've already opted in, so skip the pitch):
    - Acknowledge it warmly
    - Analyze the image and extract loan details
    - CRITICAL: After analyzing, you MUST respond with BOTH:
-     a) A friendly confirmation message (2-3 sentences) that includes asking if they have more loans to share (e.g., "Perfect! I've got that one. Do you have any other loans you'd like to include?")
+     a) A friendly confirmation message (2-3 sentences) that includes the extracted details in a readable format (e.g., "Perfect! I've got this one from Elektra. Here's what I gathered: • Lender: Elektra • Balance: $2,750 MXN • Interest Rate: 6.5% weekly. Do you have any other loans you'd like to include?")
      b) A JSON object with the extracted loan data in this EXACT format (you MUST fill in the actual values from the image):
         {"loan": {"lender": "Lender Name", "balance": 1234.56, "rate": 16.0, "rateType": "monthly", "paymentFrequency": "biweekly"}}
      - IMPORTANT: The JSON must contain REAL extracted data, not empty values. Extract: lender name (e.g., Elektra, DiDi, BBVA), outstanding balance in MXN, and interest rate (convert monthly to weekly if needed).
+     - IMPORTANT: If you successfully extract the data, DO NOT include any error messages. Only include error messages if you truly cannot extract the data.
    - If you cannot clearly extract the data from the image, respond with: {"loan": null, "error": "Could not extract loan details"} AND ask them to either:
      * Share another clearer screenshot that shows the lender name, outstanding balance, and interest rate
      * Or provide the details manually (lender name, balance, and interest rate)
@@ -459,10 +460,42 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
                 }
                 
                 // Fallback: Try to extract from text format if JSON not found
-                // Look for patterns like "Lender: Kueski" or "• Lender: Kueski"
-                const lenderMatch = text.match(/(?:Lender|Prestador|Prestamista):\s*([A-Za-z\s]+(?:México|Pago|Crédito)?)/i);
-                const balanceMatch = text.match(/(?:Balance|Saldo):\s*\$?([\d,]+\.?\d*)\s*MXN/i);
-                const rateMatch = text.match(/(?:Interest Rate|Tasa|Tasa de Interés):\s*([\d.]+)%\s*(weekly|semanal|monthly|mensual)/i);
+                // Look for patterns like "Lender: Kueski" or "• Lender: Kueski" or "Lender: Elektra"
+                // Handle both bullet points and plain text
+                const lenderPatterns = [
+                    /(?:Lender|Prestador|Prestamista):\s*([A-Za-z\s]+(?:México|Pago|Crédito|Pago)?)/i,
+                    /•\s*(?:Lender|Prestador|Prestamista):\s*([A-Za-z\s]+(?:México|Pago|Crédito|Pago)?)/i
+                ];
+                
+                const balancePatterns = [
+                    /(?:Balance|Saldo):\s*\$?([\d,]+\.?\d*)\s*MXN/i,
+                    /•\s*(?:Balance|Saldo):\s*\$?([\d,]+\.?\d*)\s*MXN/i
+                ];
+                
+                const ratePatterns = [
+                    /(?:Interest Rate|Tasa|Tasa de Interés):\s*([\d.]+)%\s*(weekly|semanal|monthly|mensual)/i,
+                    /•\s*(?:Interest Rate|Tasa|Tasa de Interés):\s*([\d.]+)%\s*(weekly|semanal|monthly|mensual)/i
+                ];
+                
+                let lenderMatch = null;
+                let balanceMatch = null;
+                let rateMatch = null;
+                
+                // Try each pattern
+                for (const pattern of lenderPatterns) {
+                    lenderMatch = text.match(pattern);
+                    if (lenderMatch) break;
+                }
+                
+                for (const pattern of balancePatterns) {
+                    balanceMatch = text.match(pattern);
+                    if (balanceMatch) break;
+                }
+                
+                for (const pattern of ratePatterns) {
+                    rateMatch = text.match(pattern);
+                    if (rateMatch) break;
+                }
                 
                 if (lenderMatch && balanceMatch && rateMatch) {
                     const lender = lenderMatch[1].trim();
@@ -470,7 +503,7 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
                     const rate = parseFloat(rateMatch[1]);
                     const rateType = rateMatch[2].toLowerCase().includes('monthly') || rateMatch[2].toLowerCase().includes('mensual') ? 'monthly' : 'weekly';
                     
-                    if (lender && balance && rate) {
+                    if (lender && balance && rate && !isNaN(balance) && !isNaN(rate)) {
                         return {
                             lender: lender,
                             balance: balance,
@@ -971,17 +1004,13 @@ Ready to get started? I just need you to share screenshots of your loans with ot
                         loanExtractionAttempts = 0; // Reset fallback counter
                         
                         // Remove JSON from the displayed message (keep only the friendly text)
-                        // Remove both inline JSON and code block JSON (including empty ones)
-                        // Also remove error messages about extraction failure
+                        // The LLM should handle all messaging, we just clean up the JSON
                         assistantMessage = assistantMessage
                             .replace(/\{[\s\S]*?"loan"[\s\S]*?\}/g, '')
                             .replace(/```json\s*[\s\S]*?\s*```/g, '')
                             .replace(/```\s*\{[\s\S]*?\}\s*```/g, '')
                             .replace(/\{\s*\}/g, '') // Remove empty JSON objects
-                            .replace(/I couldn't clearly extract[\s\S]*?interest rate/gi, '') // Remove error message
-                            .replace(/No pude extraer claramente[\s\S]*?tasa de interés/gi, '') // Remove error message in Spanish
-                            .replace(/Could you help me[\s\S]*?interest rate/gi, '') // Remove error message continuation
-                            .replace(/¿Podrías ayudarme[\s\S]*?tasa de interés/gi, '') // Remove error message continuation in Spanish
+                            .replace(/\n\n\n+/g, '\n\n') // Clean up multiple newlines
                             .trim();
                         
                         // Just acknowledge the loan - don't show offer yet
