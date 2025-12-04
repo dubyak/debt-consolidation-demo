@@ -393,20 +393,22 @@ CUANDO ANALICES IMÁGENES DE EVIDENCIA:
                     contentDiv.appendChild(imgDiv);
                 }
                 
-                // Message bubble
-                const bubble = document.createElement('div');
-                bubble.className = msg.role === 'user' 
-                    ? 'bg-[#FF6B35] text-white rounded-2xl rounded-br-md px-4 py-2.5 text-sm'
-                    : 'bg-gray-100 text-gray-800 rounded-2xl rounded-bl-md px-4 py-2.5 text-sm message-content';
-                
-                // Render markdown for assistant messages
-                if (msg.role === 'assistant' && typeof marked !== 'undefined') {
-                    bubble.innerHTML = marked.parse(msg.content || '');
-                } else {
-                    bubble.textContent = msg.content || '';
+                // Message bubble - only show if there's text content
+                if (msg.content && msg.content.trim()) {
+                    const bubble = document.createElement('div');
+                    bubble.className = msg.role === 'user' 
+                        ? 'bg-[#FF6B35] text-white rounded-2xl rounded-br-md px-4 py-2.5 text-sm'
+                        : 'bg-gray-100 text-gray-800 rounded-2xl rounded-bl-md px-4 py-2.5 text-sm message-content';
+                    
+                    // Render markdown for assistant messages
+                    if (msg.role === 'assistant' && typeof marked !== 'undefined') {
+                        bubble.innerHTML = marked.parse(msg.content);
+                    } else {
+                        bubble.textContent = msg.content;
+                    }
+                    
+                    contentDiv.appendChild(bubble);
                 }
-                
-                contentDiv.appendChild(bubble);
                 msgDiv.appendChild(contentDiv);
                 elements.messagesArea.appendChild(msgDiv);
             });
@@ -450,13 +452,12 @@ CUANDO ANALICES IMÁGENES DE EVIDENCIA:
                 // Build API messages
                 const apiMessages = messages.map(msg => {
                     if (msg.image) {
-                        return {
-                            role: msg.role,
-                            content: [
-                                { type: 'text', text: msg.content || 'Aquí está mi evidencia' },
-                                { type: 'image_url', image_url: { url: msg.image } }
-                            ]
-                        };
+                        // For image messages, include minimal or no text
+                        const content = [{ type: 'image_url', image_url: { url: msg.image } }];
+                        if (msg.content && msg.content.trim()) {
+                            content.unshift({ type: 'text', text: msg.content });
+                        }
+                        return { role: msg.role, content: content };
                     }
                     return { role: msg.role, content: msg.content };
                 });
@@ -582,7 +583,7 @@ CUANDO ANALICES IMÁGENES DE EVIDENCIA:
             const reader = new FileReader();
             reader.onload = () => {
                 const base64 = reader.result;
-                sendMessage('Aquí está mi evidencia', base64);
+                sendMessage('', base64);  // Just send the image, no text
             };
             reader.readAsDataURL(file);
             
