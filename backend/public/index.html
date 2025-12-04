@@ -1,62 +1,74 @@
 <!DOCTYPE html>
 <!--
-    Debt Consolidation Demo - Clean Chat Agent Version
-    ===================================================
+    Tala Credit Limit Increase Demo - "Dumb Terminal" Architecture
+    ==============================================================
     
-    This version uses OpenAI API directly with a clean chat interface.
-    The LLM handles the entire flow naturally through conversation.
+    The LLM handles ALL flow logic, calculations, and decision-making.
+    Frontend just sends messages and displays responses.
 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tala - Debt Consolidation Demo</title>
+    <title>Tala - Credit Limit Demo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        body {
-            font-family: 'Nunito', sans-serif;
-        }
-        .api-key-input {
-            font-family: monospace;
-            font-size: 0.75rem;
-        }
-        /* Design System Colors */
+        body { font-family: 'Nunito', sans-serif; }
         :root {
             --orange-primary: #FF6B35;
             --orange-hover: #E55A2B;
-            --light-blue: #E3F2FD;
-            --blue-accent: #2196F3;
-            --dark-grey: #2D2D2D;
-            --light-grey-bg: #F5F5F5;
-        }
-        .btn-primary {
-            background-color: var(--orange-primary);
-            color: white;
-            font-weight: 600;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            transition: all 0.2s;
-        }
-        .btn-primary:hover {
-            background-color: var(--orange-hover);
-        }
-        .progress-bar {
-            background-color: var(--light-blue);
-            height: 4px;
-            border-radius: 2px;
-        }
-        .progress-fill {
-            background-color: var(--blue-accent);
-            height: 100%;
-            border-radius: 2px;
-            transition: width 0.3s ease;
         }
         .andrea-image {
             object-fit: cover;
             object-position: center center;
             width: 100%;
             height: 100%;
+        }
+        .message-content h1, .message-content h2, .message-content h3 {
+            font-weight: 700;
+            margin-top: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+        .message-content ul, .message-content ol {
+            margin-left: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .message-content li {
+            margin-bottom: 0.25rem;
+        }
+        .message-content p {
+            margin-bottom: 0.5rem;
+        }
+        .message-content strong {
+            font-weight: 700;
+        }
+        .offer-card {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            border-radius: 1rem;
+            padding: 1rem;
+            color: white;
+            margin: 0.5rem 0;
+        }
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 8px 12px;
+        }
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: #9CA3AF;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
         }
     </style>
     <script>
@@ -66,9 +78,6 @@
                     colors: {
                         'orange-primary': '#FF6B35',
                         'orange-hover': '#E55A2B',
-                        'light-blue': '#E3F2FD',
-                        'blue-accent': '#2196F3',
-                        'dark-grey': '#2D2D2D',
                     }
                 }
             }
@@ -91,29 +100,19 @@
                 <form id="loginForm" class="space-y-4">
                     <div>
                         <label class="text-xs text-gray-500 block mb-1">Username</label>
-                        <input
-                            type="text"
-                            id="usernameInput"
-                            placeholder="Enter username"
+                        <input type="text" id="usernameInput" placeholder="Enter username"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20 focus:border-[#FF6B35]"
-                            autocomplete="username"
-                        />
+                            autocomplete="username" />
                     </div>
                     <div>
                         <label class="text-xs text-gray-500 block mb-1">Password</label>
-                        <input
-                            type="password"
-                            id="passwordInput"
-                            placeholder="Enter password"
+                        <input type="password" id="passwordInput" placeholder="Enter password"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20 focus:border-[#FF6B35]"
-                            autocomplete="current-password"
-                        />
+                            autocomplete="current-password" />
                     </div>
                     <div id="loginError" class="text-red-500 text-xs text-center hidden"></div>
-                    <button
-                        type="submit"
-                        class="w-full px-4 py-2 bg-[#FF6B35] hover:bg-[#E55A2B] text-white rounded-lg font-semibold transition-colors shadow-sm"
-                    >
+                    <button type="submit"
+                        class="w-full px-4 py-2 bg-[#FF6B35] hover:bg-[#E55A2B] text-white rounded-lg font-semibold transition-colors shadow-sm">
                         Access Demo
                     </button>
                 </form>
@@ -140,61 +139,30 @@
                 </div>
                 <div class="flex-1 flex items-center gap-2">
                     <div>
-                        <h1 id="title" class="text-white font-semibold text-lg tracking-tight">Tala</h1>
-                        <p id="subtitle" class="text-white/90 text-xs">Tu aliado financiero</p>
+                        <h1 id="title" class="text-white font-semibold text-lg tracking-tight">Andrea de Tala</h1>
+                        <p id="subtitle" class="text-white/90 text-xs">Tu asesora financiera</p>
                     </div>
-                    <img src="https://www.tala.co/wp-content/uploads/2021/06/tala-logo-white.svg" alt="Tala Logo" class="h-5 opacity-90" onerror="this.style.display='none';">
                 </div>
-                <div class="flex items-center gap-2">
-                    <button 
-                        id="langToggle"
-                        class="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors"
-                    >
-                        EN
-                    </button>
-                    <button 
-                        id="resetBtn"
-                        class="text-white/80 hover:text-white text-xs underline"
-                    >
-                        Reiniciar
-                    </button>
-                </div>
+                <button id="resetBtn" class="text-white/80 hover:text-white text-xs underline">Reiniciar</button>
             </div>
 
             <!-- Messages Area -->
-            <div id="messagesArea" class="h-96 overflow-y-auto p-4 space-y-3 bg-white">
-                <!-- Messages will be inserted here -->
-            </div>
+            <div id="messagesArea" class="h-96 overflow-y-auto p-4 space-y-3 bg-white"></div>
 
             <!-- Input Area -->
             <div class="border-t border-gray-100 bg-white p-3">
                 <form id="messageForm" class="flex gap-2 items-end">
-                    <button
-                        type="button"
-                        id="imageBtn"
-                        class="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 transition-colors flex-shrink-0"
-                    >
+                    <button type="button" id="imageBtn"
+                        class="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 transition-colors flex-shrink-0">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                     </button>
-                    <input
-                        type="file"
-                        id="fileInput"
-                        accept="image/*"
-                        class="hidden"
-                    />
-                    <input
-                        type="text"
-                        id="messageInput"
-                        placeholder="Escribe un mensaje..."
-                        class="flex-1 bg-gray-100 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20 transition-all"
-                    />
-                    <button
-                        type="submit"
-                        id="sendBtn"
-                        class="w-10 h-10 rounded-full bg-[#FF6B35] hover:bg-[#E55A2B] disabled:bg-gray-300 flex items-center justify-center text-white transition-colors flex-shrink-0"
-                    >
+                    <input type="file" id="fileInput" accept="image/*" class="hidden" />
+                    <input type="text" id="messageInput" placeholder="Escribe un mensaje..."
+                        class="flex-1 bg-gray-100 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20 transition-all" />
+                    <button type="submit" id="sendBtn"
+                        class="w-10 h-10 rounded-full bg-[#FF6B35] hover:bg-[#E55A2B] disabled:bg-gray-300 flex items-center justify-center text-white transition-colors flex-shrink-0">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                         </svg>
@@ -205,183 +173,162 @@
     </div>
 
     <script>
-        const UI_TEXT = {
-            en: {
-                title: 'Andrea from Tala',
-                subtitle: 'Your loan buddy',
-                reset: 'Reset',
-                typePlaceholder: 'Type a message...',
-                langToggle: 'ES'
-            },
-            es: {
-                title: 'Andrea de Tala',
-                subtitle: 'Tu aliado financiero',
-                reset: 'Reiniciar',
-                typePlaceholder: 'Escribe un mensaje...',
-                langToggle: 'EN'
-            }
-        };
-
-        // Customer profile defaults
-        const DEFAULT_PROFILE = {
-            customerName: 'María'
-        };
-
-        // Fallback loan data based on demo screenshots (used if extraction fails)
-        const FALLBACK_LOANS = [
-            { lender: 'Elektra', balance: 1050, rate: 16, rateType: 'monthly', paymentFrequency: 'biweekly' },
-            { lender: 'DiDi', balance: 5290.50, rate: 20, rateType: 'monthly', paymentFrequency: 'biweekly' },
-            { lender: 'BBVA', balance: 2000.50, rate: 30, rateType: 'monthly', paymentFrequency: 'biweekly' }
-        ];
-
-        // Configuration - Railway backend URL (use same origin when served from backend)
+        // ========================================
+        // CONFIGURATION
+        // ========================================
         const BACKEND_URL = window.location.origin;
+        const DEMO_CREDENTIALS = { username: 'Talajote', password: 'StackWithT@la' };
         
-        // Demo credentials
-        const DEMO_CREDENTIALS = {
-            username: 'Talajote',
-            password: 'StackWithT@la'
+        // Demo customer profile (hardcoded for demo)
+        const CUSTOMER = {
+            name: 'María',
+            currentLimit: 5000,
+            currentRate: 4.5
         };
-        
-        // State
-        let messages = [];
-        let language = 'es';
-        let isLoading = false;
-        let customerProfile = { ...DEFAULT_PROFILE };
-        let isAuthenticated = false;
-        let extractedLoans = []; // Track loans extracted from screenshots
-        let loanExtractionAttempts = 0; // Track failed extraction attempts
-        let upsellOffered = false; // Track if upsell has been offered
-        let upsellAccepted = false; // Track if customer accepted the upsell
 
-        // Build system prompt with customer info
-        function buildSystemPrompt() {
-            const customerInfo = language === 'es'
-                ? `Nombre: ${customerProfile.customerName}`
-                : `Name: ${customerProfile.customerName}`;
+        // ========================================
+        // SYSTEM PROMPT - ALL FLOW LOGIC LIVES HERE
+        // ========================================
+        const SYSTEM_PROMPT = `Eres Andrea, una asesora de préstamos amigable en Tala. Eres cálida, comprensiva y genuinamente quieres ayudar a los clientes.
 
-            const basePrompt = language === 'es' ? SYSTEM_PROMPT_ES : SYSTEM_PROMPT_EN;
-            return `${basePrompt}\n\nCUSTOMER PROFILE:\n${customerInfo}\n\nIMPORTANT: When extracting loan data from images, you MUST respond with structured JSON. Track the conversation flow naturally.`;
-        }
+PERFIL DEL CLIENTE:
+- Nombre: ${CUSTOMER.name}
+- Límite actual de Tala: $${CUSTOMER.currentLimit.toLocaleString()} MXN
+- Tasa actual: ${CUSTOMER.currentRate}% semanal
+- Ha completado 5 préstamos exitosamente con Tala
 
-        const SYSTEM_PROMPT_EN = `You are Andrea, a friendly loan advisor at Tala. You're warm, supportive, and genuinely want to help customers manage their finances better. Think of yourself as that helpful friend at a neighborhood credit cooperative - approachable, not corporate.
-
-CONTEXT:
-- The customer has completed 5 loans successfully with Tala and has paid off their current Tala loan
-- They have ALREADY OPTED IN to this special opportunity - they're interested and ready to proceed
-- This is a debt consolidation product - ONE loan to replace all their OTHER loans (NOT including Tala)
-- IMPORTANT: Tala loan is EXCLUDED from consolidation - customer has already paid it off
-
-CONSOLIDATION LOAN LOGIC:
-- We offer ONE consolidation loan that pays off ALL their other loans (EXCLUDING Tala - they've paid it off)
-- The consolidation loan limit = total of all their OTHER outstanding loans, UP TO A MAX OF $15,000 MXN
-- The consolidation loan rate = WEIGHTED AVERAGE of all their OTHER loan rates (Tala is NOT included)
-- This means: if they have expensive loans elsewhere, consolidating brings their blended rate DOWN
-
-YOUR PERSONALITY:
-- Warm and conversational, like talking to a trusted neighbor
-- Use casual language, contractions, even the occasional emoji when it fits naturally
-- Celebrate their good payment history genuinely
-- Be empathetic about the stress of managing multiple loans
-- Never sound like a bank robot or use corporate jargon
-- Ask one question at a time, keep messages short and digestible
-- Use their name occasionally (but not every message)
-
-FLOW TO FOLLOW (they've already opted in, so skip the pitch):
-1. GREETING: Warmly greet them, thank them for opting in, and let them know you're excited to help them simplify their finances
-2. EXPLAIN PROCESS: Briefly explain what you need - screenshots of their loans from other apps. They can share as many loans as they have. Keep it simple and reassuring.
-3. COLLECTION: Guide them through sharing screenshots one at a time. For each screenshot they share:
-   - Acknowledge it warmly
-   - Analyze the image and extract loan details
-   - CRITICAL: After analyzing, you MUST respond with BOTH:
-     a) A friendly confirmation message (2-3 sentences) that includes the extracted details in a readable format (e.g., "Perfect! I've got this one from Elektra. Here's what I gathered: • Lender: Elektra • Balance: $2,750 MXN • Interest Rate: 6.5% weekly. Do you have any other loans you'd like to include?")
-     b) A JSON object with the extracted loan data in this EXACT format (you MUST fill in the actual values from the image):
-        {"loan": {"lender": "Lender Name", "balance": 1234.56, "rate": 16.0, "rateType": "monthly", "paymentFrequency": "biweekly"}}
-     - IMPORTANT: The JSON must contain REAL extracted data, not empty values. Extract: lender name (e.g., Elektra, DiDi, BBVA), outstanding balance in MXN, and interest rate (convert monthly to weekly if needed).
-     - CRITICAL RULE: If you successfully extract ANY loan data (lender, balance, rate), you MUST NOT include any error messages in your response. Only include error messages if you truly cannot extract the data (e.g., image is too blurry, missing critical information). If you can see the lender name, balance, and rate, you have successfully extracted the data - do NOT include error messages.
-   - If you cannot clearly extract the data from the image, respond with: {"loan": null, "error": "Could not extract loan details"} AND ask them to either:
-     * Share another clearer screenshot that shows the lender name, outstanding balance, and interest rate
-     * Or provide the details manually (lender name, balance, and interest rate)
-   - If they provide loan details manually via text, extract the information and respond with the same JSON format, and ask if they have more loans
-   - IMPORTANT: Competitor rates should be HIGHER (typically 6-12% weekly or 25-50% monthly)
-   - IMPORTANT: After each loan, ask if they have more loans to share. Only proceed to show the offer when they indicate they're done (e.g., "that's all", "no more", "I'm done")
-4. COLLECTION CONTINUES: After each loan is shared, acknowledge it warmly and ask if they have more loans to share. Keep collecting until they indicate they're done (e.g., "that's all", "no more", "I'm done", "that's everything").
-5. SUMMARY: When the customer indicates they're done sharing loans, provide a brief summary of all the loans they've shared. List each loan with lender name, balance, and interest rate. Also mention the total balance and total interest they're currently paying across all loans. Keep this summary brief (3-4 sentences).
-6. SUMMARY & OFFER: After your summary, the system will automatically present the consolidation offer with detailed calculations. The offer will include an additional opportunity for 10% more at the same rate. DO NOT calculate or present the offer yourself - just provide the summary and let the system show the offer.
-7. UPSELL HANDLING: After the system shows the offer with the additional 10% opportunity, wait for the customer's response. If they say yes/accept, the system will show an updated offer. If they decline or don't respond clearly, acknowledge and proceed with the original offer.
-8. APPROVAL: After the final offer is shown (whether with or without the additional 10%), confirm they're approved! The consolidation loan will pay off their other loans directly. One simple payment going forward.
-
-IMPORTANT BEHAVIORS:
-- When they share an image, analyze it and extract realistic loan details. Use Mexican lender names like: Elektra, DiDi, BBVA, Kueski, Stori, Nu México, Mercado Crédito, Creditea, Dineria, Konfío, Credilikeme, Moneyman, or Cashclick
-- CRITICAL: After extracting loan data from an image, ALWAYS include a JSON object in your response with the structured data
-- Keep responses SHORT - 2-3 sentences max usually
-- They already opted in, so don't re-pitch or ask if they're interested - they ARE
-- If they seem hesitant about sharing, be reassuring about privacy/security
-- ALWAYS respond in English
-- Remember: max consolidation limit is $15,000 MXN even if their total debt is higher
-- Remember: Tala loan is EXCLUDED - customer has paid it off
-
-CURRENCY: Always use Mexican pesos (MXN) with $ symbol, e.g., $5,000 MXN`;
-
-        const SYSTEM_PROMPT_ES = `Eres Andrea, una asesora de préstamos amigable en Tala. Eres cálida, comprensiva y genuinamente quieres ayudar a los clientes a manejar mejor sus finanzas. Piensa en ti misma como esa amiga servicial de una cooperativa de crédito del barrio - accesible, no corporativa.
-
-CONTEXTO:
-- El cliente ha completado 5 préstamos exitosamente con Tala y ya pagó su préstamo actual de Tala
-- YA ACEPTARON participar en esta oportunidad especial - están interesados y listos para continuar
-- Este es un producto de consolidación de deudas - UN préstamo para reemplazar todos sus OTROS préstamos (NO incluyendo Tala)
-- IMPORTANTE: El préstamo de Tala está EXCLUIDO de la consolidación - el cliente ya lo pagó
-
-LÓGICA DEL PRÉSTAMO DE CONSOLIDACIÓN:
-- Ofrecemos UN préstamo de consolidación que paga TODOS sus otros préstamos (EXCLUYENDO Tala - ya lo pagaron)
-- Límite del préstamo de consolidación = total de todos sus OTROS préstamos pendientes, HASTA UN MÁXIMO DE $15,000 MXN
-- Tasa del préstamo de consolidación = PROMEDIO PONDERADO de todas sus OTRAS tasas (Tala NO está incluida)
-- Si tienen préstamos caros en otros lados, consolidar baja su tasa combinada
+CÁLCULOS QUE DEBES HACER:
+- Límite base nuevo = mínimo(límite_actual × 1.2, 15000)
+- Para ${CUSTOMER.name}: $${CUSTOMER.currentLimit} × 1.2 = $${Math.min(CUSTOMER.currentLimit * 1.2, 15000).toLocaleString()} MXN
 
 TU PERSONALIDAD:
 - Cálida y conversacional, como hablar con un vecino de confianza
-- Usa lenguaje casual, coloquial mexicano natural, emojis ocasionales cuando encajen
-- Celebra genuinamente su buen historial de pagos
-- Nunca suenes como un robot bancario ni uses jerga corporativa
-- Haz una pregunta a la vez, mantén los mensajes cortos (2-3 oraciones usualmente)
-- Usa su nombre ocasionalmente (pero no en cada mensaje)
-- Usa "tú" no "usted" - queremos un tono cercano
+- Usa lenguaje casual, coloquial mexicano natural, emojis ocasionales
+- Haz UNA pregunta a la vez
+- Mantén mensajes cortos (2-3 oraciones máximo)
+- Usa "tú" no "usted"
 
 FLUJO DE CONVERSACIÓN:
-1. SALUDO: Salúdalos calurosamente, agradéceles por aceptar. Ya aceptaron participar - salta el pitch.
-2. EXPLICAR PROCESO: Explica brevemente que necesitas detalles de sus préstamos de otras apps. Pueden compartir tantos préstamos como tengan. Pueden compartir capturas o decirte los detalles.
-3. RECOLECCIÓN: Guíalos para compartir detalles de préstamos uno por uno. Por cada captura que compartan:
-   - Reconoce calurosamente
-   - Analiza la imagen y extrae los detalles del préstamo
-   - CRÍTICO: Después de analizar, DEBES responder con AMBOS:
-     a) Un mensaje amigable de confirmación (2-3 oraciones) que incluya los detalles extraídos en un formato legible (ej: "¡Perfecto! Ya tengo este de Elektra. Esto es lo que encontré: • Prestamista: Elektra • Saldo: $2,750 MXN • Tasa de Interés: 6.5% semanal. ¿Tienes otros préstamos que quieras incluir?")
-     b) Un objeto JSON con los datos extraídos del préstamo en este formato EXACTO (DEBES llenar los valores reales de la imagen):
-        {"loan": {"lender": "Nombre del Prestamista", "balance": 1234.56, "rate": 16.0, "rateType": "monthly", "paymentFrequency": "biweekly"}}
-     - IMPORTANTE: El JSON debe contener datos REALES extraídos, no valores vacíos. Extrae: nombre del prestamista (ej., Elektra, DiDi, BBVA), saldo pendiente en MXN, y tasa de interés (convierte mensual a semanal si es necesario).
-     - REGLA CRÍTICA: Si extraes exitosamente CUALQUIER dato del préstamo (prestamista, saldo, tasa), NO debes incluir ningún mensaje de error en tu respuesta. Solo incluye mensajes de error si realmente no puedes extraer los datos (ej., imagen muy borrosa, falta información crítica). Si puedes ver el nombre del prestamista, saldo y tasa, has extraído los datos exitosamente - NO incluyas mensajes de error.
-   - Si no puedes extraer claramente los datos de la imagen, responde con: {"loan": null, "error": "No se pudieron extraer los detalles del préstamo"} Y pídeles que:
-     * Compartan otra captura más clara que muestre el nombre del prestamista, saldo pendiente y tasa de interés
-     * O que te den los detalles manualmente (nombre del prestamista, saldo y tasa de interés)
-   - Si te proporcionan los detalles del préstamo manualmente por texto, extrae la información y responde con el mismo formato JSON, y pregunta si tienen más préstamos
-   - IMPORTANTE: Las tasas de competidores deben ser MÁS ALTAS (típicamente 6-12% semanal o 25-50% mensual)
-   - IMPORTANTE: Después de cada préstamo, pregunta si tienen más préstamos para compartir. Solo procede a mostrar la oferta cuando indiquen que terminaron (ej., "eso es todo", "no más", "ya terminé")
-4. RECOLECCIÓN CONTINÚA: Después de cada préstamo compartido, reconócelo calurosamente y pregunta si tienen más préstamos para compartir. Sigue recolectando hasta que indiquen que terminaron (ej., "eso es todo", "no más", "ya terminé", "eso es todo lo que tengo").
-5. RESUMEN: Cuando el cliente indique que terminó de compartir préstamos, proporciona un breve resumen de todos los préstamos que compartieron. Lista cada préstamo con nombre del prestamista, saldo y tasa de interés. También menciona el saldo total y el interés total que están pagando actualmente en todos los préstamos. Mantén este resumen breve (3-4 oraciones).
-6. RESUMEN Y OFERTA: Después de tu resumen, el sistema presentará automáticamente la oferta de consolidación con cálculos detallados. NO calcules ni presentes la oferta tú misma - solo proporciona el resumen y deja que el sistema muestre la oferta.
-7. APROBACIÓN: Después de que el sistema muestre la oferta, ¡confirma que están aprobados! El préstamo de consolidación pagará sus otros préstamos directamente.
 
-COMPORTAMIENTOS IMPORTANTES:
-- Cuando compartan una imagen, analízala y extrae detalles realistas del préstamo. Usa nombres de prestamistas mexicanos como: Elektra, DiDi, BBVA, Kueski, Stori, Nu México, Mercado Crédito, Creditea, Dineria, Konfío, Credilikeme, Moneyman, o Cashclick
-- CRÍTICO: Después de extraer datos de un préstamo de una imagen, SIEMPRE incluye un objeto JSON en tu respuesta con los datos estructurados
-- Mantén las respuestas CORTAS - 2-3 oraciones máximo usualmente
-- Ya aceptaron participar, así que no vuelvas a hacer pitch ni preguntes si están interesados
-- Si parecen dudosos, sé tranquilizadora sobre privacidad/seguridad
-- SIEMPRE responde en español mexicano natural
-- Recuerda: el límite máximo de consolidación es $15,000 MXN aunque su deuda total sea mayor
-- Recuerda: El préstamo de Tala está EXCLUIDO - el cliente ya lo pagó
+1. SALUDO CÁLIDO E INTENCIÓN
+   - Preséntate brevemente
+   - Explica: "Quiero entender tu situación y ver si podemos ofrecerte un préstamo Tala que se adapte a tus necesidades y te recompense por pagar a tiempo."
 
-MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
+2. RECOPILACIÓN RÁPIDA DE INFORMACIÓN (una pregunta a la vez)
+   a) Pregunta: "¿Cuál es tu límite actual con Tala?" (aunque lo sabemos, confirmamos)
+   b) Pregunta: "¿Para qué usas normalmente Tala?"
+   c) Pregunta: "¿Para qué necesitas el dinero esta vez?"
+   d) Pregunta: "¿Cuál es aproximadamente tu ingreso mensual y cada cuánto lo recibes (semanal/quincenal/mensual)?"
 
-        // DOM elements
+3. CONSTRUIR Y PRESENTAR OFERTA BASE
+   Después de recopilar la información, calcula y presenta:
+   
+   ---
+   💰 **Tu Oferta Tala**
+   
+   📊 **Detalles del préstamo:**
+   • Monto: $[límite_base] MXN
+   • Plazo: 2 meses
+   • Tasa: ${CUSTOMER.currentRate}% semanal
+   
+   🎁 **Beneficios especiales:**
+   • Cashback: $100 MXN por cada pago a tiempo (hasta $200)
+   • Línea de emergencia: $1,000 MXN disponibles por 15 días a 0% interés
+   
+   ---
+   
+   SI el límite base >= $13,000 MXN:
+   - Presenta la oferta como su máximo por ahora
+   - Di: "Este es el límite más alto que puedo ofrecerte ahora mismo basándome en tu historial con Tala."
+   
+   SI el límite base < $13,000 MXN:
+   - Presenta la oferta y luego pregunta:
+   - "¿Te parece bien esta oferta, o te gustaría ver si puedes calificar para un límite más alto (hasta un máximo de $15,000 pesos)?"
+
+4. SI ACEPTAN LA OFERTA BASE
+   - Reconfirma: monto, plazo de 2 meses, tasa, cashback, línea de emergencia
+   - Obtén aceptación
+   - Recuérdales: pago a tiempo → cashback + mejores ofertas futuras
+   - Cierra la conversación celebrando
+
+5. SI QUIEREN LÍMITE MÁS ALTO (solo cuando base < $13k)
+   
+   a) Pregunta cómo usarán el dinero extra:
+      "Si aumentamos tu límite por encima de $[límite_base] MXN, ¿para qué usarías específicamente el monto adicional?"
+   
+   b) Establece expectativas:
+      "Podríamos aumentar tu límite entre un 10-30% más, hasta $15,000 pesos. No está garantizado; necesitaré evidencia que respalde un límite más alto."
+   
+   c) Recopilación guiada de evidencia:
+      Pídeles compartir cualquier combinación de:
+      • Fotos de negocio (tienda, inventario, actividad)
+      • Otras ofertas/límites de préstamos en los últimos 3 meses
+      • Comprobantes de ingresos (capturas de depósitos, nóminas, transferencias)
+      • Cualquier otra cosa que crean que ayude
+      
+      Ciclo: recibe → reconoce → "¿Algo más?" → para cuando digan que terminaron
+
+6. EVALUAR Y OFERTA FINAL
+   
+   Basándote en la evidencia, decide internamente el nivel de aumento:
+   - Sin aumento (0%): evidencia débil o ninguna
+   - +10%: algo de evidencia, uso razonable
+   - +20%: buena evidencia, uso productivo claro
+   - +30%: evidencia fuerte, múltiples fuentes
+   
+   Límite final = mínimo(límite_base × (1 + porcentaje/100), 15000)
+   
+   SI hay aumento:
+   - Explica qué evidencia + uso de fondos lo justificó
+   - Presenta nuevo monto con misma estructura (2 meses, misma tasa, cashback, línea emergencia)
+   
+   SI no hay aumento:
+   - Explica amablemente por qué es más seguro quedarse con el monto base
+   - Mantén recompensas + línea de emergencia
+   - Enmarca este préstamo como un paso hacia límites más altos en el futuro
+   
+   Confirma aceptación y cierra celebrando.
+
+FORMATO DE OFERTAS:
+Siempre usa este formato visual para las ofertas:
+
+---
+💰 **Tu Oferta Tala**
+
+📊 **Detalles del préstamo:**
+• Monto: $X,XXX MXN
+• Plazo: 2 meses
+• Tasa: ${CUSTOMER.currentRate}% semanal
+
+🎁 **Beneficios especiales:**
+• Cashback: $100 MXN por cada pago a tiempo (hasta $200)
+• Línea de emergencia: $1,000 MXN disponibles por 15 días a 0% interés
+
+---
+
+REGLAS IMPORTANTES:
+- Siempre responde en español mexicano natural
+- Una pregunta a la vez
+- Mensajes cortos y amigables
+- Celebra sus logros y buen historial
+- Sé empática con sus necesidades financieras
+- Nunca suenes como un robot bancario
+
+CUANDO ANALICES IMÁGENES DE EVIDENCIA:
+- Describe brevemente lo que ves
+- Reconoce el esfuerzo del cliente
+- Pregunta si tienen algo más que compartir`;
+
+        // ========================================
+        // STATE - Minimal, just messages
+        // ========================================
+        let messages = [];
+        let isLoading = false;
+        let isAuthenticated = false;
+
+        // ========================================
+        // DOM ELEMENTS
+        // ========================================
         const elements = {
             messagesArea: document.getElementById('messagesArea'),
             messageInput: document.getElementById('messageInput'),
@@ -390,866 +337,214 @@ MONEDA: Siempre usa pesos mexicanos (MXN) con símbolo $, ej., $5,000 MXN`;
             imageBtn: document.getElementById('imageBtn'),
             sendBtn: document.getElementById('sendBtn'),
             resetBtn: document.getElementById('resetBtn'),
-            langToggle: document.getElementById('langToggle'),
-            title: document.getElementById('title'),
-            subtitle: document.getElementById('subtitle')
+            passwordModal: document.getElementById('passwordModal'),
+            loginForm: document.getElementById('loginForm'),
+            usernameInput: document.getElementById('usernameInput'),
+            passwordInput: document.getElementById('passwordInput'),
+            loginError: document.getElementById('loginError')
         };
 
-        // Check authentication
-        checkAuthentication();
-
-        // Format message text with simple markdown support
-        function formatMessage(text) {
-            if (!text) return '';
-            
-            // Escape HTML first
-            let html = text
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
-            
-            // Headers (### Header -> <strong>Header</strong>)
-            html = html.replace(/###\s+(.+)/g, '<div class="font-bold text-base mt-2 mb-1">$1</div>');
-            html = html.replace(/##\s+(.+)/g, '<div class="font-bold text-base mt-2 mb-1">$1</div>');
-            html = html.replace(/#\s+(.+)/g, '<div class="font-bold text-base mt-2 mb-1">$1</div>');
-            
-            // Bold (**text** or __text__)
-            html = html.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold">$1</strong>');
-            html = html.replace(/__(.+?)__/g, '<strong class="font-semibold">$1</strong>');
-            
-            // Bullet lists (- item)
-            html = html.replace(/^-\s+(.+)$/gm, '<div class="ml-2 mb-1">• $1</div>');
-            
-            // Numbered lists (1. item)
-            html = html.replace(/^\d+\.\s+(.+)$/gm, '<div class="ml-2 mb-1">$1</div>');
-            
-            // Line breaks
-            html = html.replace(/\n/g, '<br>');
-            
-            return html;
-        }
-
-        // Update UI text based on language
-        function updateUIText() {
-            const t = UI_TEXT[language];
-            elements.title.textContent = t.title;
-            elements.subtitle.textContent = t.subtitle;
-            elements.resetBtn.textContent = t.reset;
-            elements.messageInput.placeholder = t.typePlaceholder;
-            elements.langToggle.textContent = t.langToggle;
-        }
-
-        // Extract JSON from agent response, with fallback to text parsing
-        function extractLoanData(text) {
-            // Try JSON extraction first (wrapped in its own try/catch so we can fall back to text)
-            try {
-                const jsonMatch = text.match(/\{[\s\S]*?"loan"[\s\S]*?\}/);
-                if (jsonMatch) {
-                    const parsed = JSON.parse(jsonMatch[0]);
-                    if (parsed.loan && parsed.loan.lender && parsed.loan.balance && parsed.loan.rate) {
-                        console.log('Successfully extracted loan from JSON:', parsed.loan);
-                        return parsed.loan;
-                    }
-                }
-            } catch (e) {
-                console.log('JSON extraction failed, trying text extraction:', e.message);
-            }
-            
-            // Try JSON code blocks (also wrapped separately)
-            try {
-                const codeBlockMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
-                if (codeBlockMatch) {
-                    const parsed = JSON.parse(codeBlockMatch[1]);
-                    if (parsed.loan && parsed.loan.lender && parsed.loan.balance && parsed.loan.rate) {
-                        console.log('Successfully extracted loan from code block:', parsed.loan);
-                        return parsed.loan;
-                    }
-                }
-            } catch (e) {
-                console.log('Code block JSON extraction failed, trying text extraction:', e.message);
-            }
-                
-            // Fallback: Try to extract from text format if JSON not found or invalid
-                // Look for patterns like "• Prestamista: Kueski" with bullet points and newlines
-                // Handle both bullet points (•) and plain text, with flexible whitespace
-                
-                // More flexible patterns that handle newlines and bullet points
-                // Use multiline matching to handle cases where bullet and text are on separate lines
-                const lenderPatterns = [
-                    /[•\-\*][\s\n]*(?:Lender|Prestador|Prestamista):[\s\n]*([A-Za-z0-9\s]+?)(?=\n|$)/i,
-                    /(?:Lender|Prestador|Prestamista):[\s\n]*([A-Za-z0-9\s]+?)(?=\n|$)/i
-                ];
-                
-                const balancePatterns = [
-                    /[•\-\*][\s\n]*(?:Balance|Saldo):[\s\n]*\$?([\d,]+\.?\d*)[\s\n]*MXN/i,
-                    /(?:Balance|Saldo):[\s\n]*\$?([\d,]+\.?\d*)[\s\n]*MXN/i
-                ];
-                
-                const ratePatterns = [
-                    /[•\-\*][\s\n]*(?:Interest Rate|Tasa|Tasa de Interés):[\s\n]*([\d.]+)%[\s\n]*(weekly|semanal|monthly|mensual)/i,
-                    /(?:Interest Rate|Tasa|Tasa de Interés):[\s\n]*([\d.]+)%[\s\n]*(weekly|semanal|monthly|mensual)/i
-                ];
-                
-                let lenderMatch = null;
-                let balanceMatch = null;
-                let rateMatch = null;
-                
-                // Try each pattern
-                for (const pattern of lenderPatterns) {
-                    lenderMatch = text.match(pattern);
-                    if (lenderMatch) break;
-                }
-                
-                for (const pattern of balancePatterns) {
-                    balanceMatch = text.match(pattern);
-                    if (balanceMatch) break;
-                }
-                
-                for (const pattern of ratePatterns) {
-                    rateMatch = text.match(pattern);
-                    if (rateMatch) break;
-                }
-                
-                console.log('Text extraction attempting with text:', text.substring(0, 500));
-                console.log('Lender match:', lenderMatch);
-                console.log('Balance match:', balanceMatch);
-                console.log('Rate match:', rateMatch);
-                
-                if (lenderMatch && balanceMatch && rateMatch) {
-                    const lender = lenderMatch[1].trim();
-                    const balance = parseFloat(balanceMatch[1].replace(/,/g, ''));
-                    const rate = parseFloat(rateMatch[1]);
-                    const rateType = rateMatch[2].toLowerCase().includes('monthly') || rateMatch[2].toLowerCase().includes('mensual') ? 'monthly' : 'weekly';
-                    
-                    console.log('Parsed values:', { lender, balance, rate, rateType });
-                    
-                    if (lender && balance && rate && !isNaN(balance) && !isNaN(rate) && balance > 0 && rate > 0) {
-                        console.log('Successfully extracted loan from text:', { lender, balance, rate, rateType });
-                        return {
-                            lender: lender,
-                            balance: balance,
-                            rate: rate,
-                            rateType: rateType,
-                            paymentFrequency: 'biweekly'
-                        };
-                    } else {
-                        console.log('Validation failed:', { lender: !!lender, balance: !isNaN(balance) && balance > 0, rate: !isNaN(rate) && rate > 0 });
-                    }
-                }
-                
-            // If we didn't find all three, log what we found for debugging
-            if (!lenderMatch || !balanceMatch || !rateMatch) {
-                console.log('Text extraction partial match:', {
-                    lender: lenderMatch ? lenderMatch[1] : null,
-                    balance: balanceMatch ? balanceMatch[1] : null,
-                    rate: rateMatch ? rateMatch[1] : null
-                });
-            }
-            
-            return null;
-        }
-
-        // Try to extract loan details from manual text input
-        function extractLoanFromText(text) {
-            // This is a simple pattern matcher - the agent should handle this better
-            // But we can try to extract if user provides structured info
-            const lenderMatch = text.match(/(?:lender|prestamista|banco|app):\s*([A-Za-z\s]+)/i);
-            const balanceMatch = text.match(/(?:balance|saldo|monto):\s*\$?([\d,]+\.?\d*)/i);
-            const rateMatch = text.match(/(?:rate|tasa|interés):\s*([\d.]+)%/i);
-            
-            if (lenderMatch && balanceMatch && rateMatch) {
-                return {
-                    lender: lenderMatch[1].trim(),
-                    balance: parseFloat(balanceMatch[1].replace(/,/g, '')),
-                    rate: parseFloat(rateMatch[1]),
-                    rateType: text.toLowerCase().includes('mensual') || text.toLowerCase().includes('monthly') ? 'monthly' : 'weekly',
-                    paymentFrequency: 'biweekly' // Default
-                };
-            }
-            return null;
-        }
-
-        // Convert monthly rate to weekly rate
-        function monthlyToWeekly(monthlyRate) {
-            return monthlyRate / 4.33; // Approximate weeks per month
-        }
-
-        // Calculate weighted average rate (all rates converted to weekly)
-        function calculateWeightedAverageRate(loans) {
-            if (loans.length === 0) return 0;
-            
-            let totalWeightedRate = 0;
-            let totalBalance = 0;
-            
-            loans.forEach(loan => {
-                const weeklyRate = loan.rateType === 'monthly' 
-                    ? monthlyToWeekly(loan.rate) 
-                    : loan.rate;
-                totalWeightedRate += loan.balance * weeklyRate;
-                totalBalance += loan.balance;
-            });
-            
-            return totalBalance > 0 ? totalWeightedRate / totalBalance : 0;
-        }
-
-        // Calculate amortized weekly payment
-        function calculateAmortizedWeeklyPayment(principal, weeklyRatePercent, numWeeks) {
-            const r = weeklyRatePercent / 100; // Convert to decimal
-            if (r === 0) return principal / numWeeks; // No interest case
-            
-            const numerator = r * Math.pow(1 + r, numWeeks);
-            const denominator = Math.pow(1 + r, numWeeks) - 1;
-            return principal * (numerator / denominator);
-        }
-
-        // Calculate weekly rate needed to achieve target monthly payment (8 month term, amortized)
-        function calculateRateForTargetPayment(principal, targetMonthlyPayment, numMonths = 8) {
-            const numWeeks = numMonths * 4.33; // 8 months = ~34.64 weeks
-            const targetWeeklyPayment = targetMonthlyPayment / 4.33;
-            
-            // Binary search for the rate
-            let low = 0.1; // Minimum 0.1% weekly rate (don't return 0)
-            let high = 20; // Max 20% weekly rate
-            let bestRate = low;
-            const tolerance = 0.01; // 0.01% precision
-            
-            while (high - low > tolerance) {
-                const mid = (low + high) / 2;
-                const weeklyPayment = calculateAmortizedWeeklyPayment(principal, mid, numWeeks);
-                
-                if (weeklyPayment <= targetWeeklyPayment) {
-                    bestRate = mid;
-                    high = mid;
-                } else {
-                    low = mid;
-                }
-            }
-            
-            // Ensure we return at least a small positive rate
-            return Math.max(bestRate, 0.5);
-        }
-
-        // Calculate current total monthly payment across all loans (amortized estimate)
-        function calculateCurrentMonthlyPayment(loans) {
-            return loans.reduce((sum, loan) => {
-                // Estimate monthly payment using amortization
-                // Assume 3 month term for existing loans (typical short-term loans)
-                const numWeeks = 3 * 4.33; // ~13 weeks
-                
-                if (loan.rateType === 'monthly') {
-                    const weeklyRate = monthlyToWeekly(loan.rate);
-                    const weeklyPayment = calculateAmortizedWeeklyPayment(loan.balance, weeklyRate, numWeeks);
-                    return sum + (weeklyPayment * 4.33); // Convert to monthly
-                } else {
-                    const weeklyPayment = calculateAmortizedWeeklyPayment(loan.balance, loan.rate, numWeeks);
-                    return sum + (weeklyPayment * 4.33); // Convert to monthly
-                }
-            }, 0);
-        }
-
-        // Calculate consolidation offer (8 month term, amortized, 20% payment reduction)
-        function calculateConsolidationOffer(loans, includeAdditional10Percent = false) {
-            if (loans.length === 0) return null;
-            
-            const baseBalance = Math.min(
-                loans.reduce((sum, loan) => sum + loan.balance, 0),
-                15000 // Max consolidation limit
-            );
-            
-            // Add 10% if requested
-            const totalBalance = includeAdditional10Percent 
-                ? Math.min(baseBalance * 1.1, 15000) 
-                : baseBalance;
-            
-            const numMonths = 8;
-            const numWeeks = numMonths * 4.33; // ~34.64 weeks
-            
-            // Calculate current total monthly payment
-            const currentMonthlyPayment = calculateCurrentMonthlyPayment(loans);
-            
-            // Target: 20% reduction in monthly payment
-            const targetMonthlyPayment = currentMonthlyPayment * 0.8;
-            
-            // Calculate weekly rate needed to achieve target payment (amortized over 8 months)
-            const weeklyRate = calculateRateForTargetPayment(totalBalance, targetMonthlyPayment, numMonths);
-            
-            // Calculate new weekly and monthly payments
-            const newWeeklyPayment = calculateAmortizedWeeklyPayment(totalBalance, weeklyRate, numWeeks);
-            const newMonthlyPayment = newWeeklyPayment * 4.33;
-            
-            // Calculate current total weekly interest (simple interest estimate)
-            const currentWeeklyInterest = loans.reduce((sum, loan) => {
-                const weeklyRate = loan.rateType === 'monthly' 
-                    ? monthlyToWeekly(loan.rate) 
-                    : loan.rate;
-                return sum + (loan.balance * weeklyRate / 100);
-            }, 0);
-            
-            // Calculate new weekly interest (first week, will decrease over time with amortization)
-            const newWeeklyInterest = totalBalance * weeklyRate / 100;
-            
-            // Calculate monthly interest
-            const currentMonthlyInterest = currentWeeklyInterest * 4.33;
-            const newMonthlyInterest = newWeeklyInterest * 4.33;
-            const monthlyInterestSavings = currentMonthlyInterest - newMonthlyInterest;
-            
-            // Calculate total interest over 8 months
-            // Total paid = monthly payment * 8 months
-            const totalPaidCurrent = currentMonthlyPayment * numMonths;
-            const totalPaidNew = newMonthlyPayment * numMonths;
-            const totalInterestCurrent = totalPaidCurrent - baseBalance;
-            const totalInterestNew = totalPaidNew - totalBalance;
-            const totalInterestSavings = totalInterestCurrent - totalInterestNew;
-            
-            // Calculate payment savings
-            const monthlyPaymentSavings = currentMonthlyPayment - newMonthlyPayment;
-            const totalPaymentSavings = monthlyPaymentSavings * numMonths;
-            
-            // Get weighted average for comparison
-            const weightedRate = calculateWeightedAverageRate(loans);
-            
-            return {
-                totalBalance,
-                baseBalance,
-                weeklyRate,
-                weightedRate, // For comparison
-                numMonths,
-                numWeeks,
-                currentMonthlyPayment,
-                newMonthlyPayment,
-                monthlyPaymentSavings,
-                totalPaymentSavings,
-                currentMonthlyInterest,
-                newMonthlyInterest,
-                monthlyInterestSavings,
-                totalInterestCurrent,
-                totalInterestNew,
-                totalInterestSavings,
-                includeAdditional10Percent,
-                additionalAmount: includeAdditional10Percent ? (totalBalance - baseBalance) : 0
-            };
-        }
-
-        // Calculate payment dates
-        function calculatePaymentDates(numMonths) {
-            const today = new Date();
-            const firstPaymentDate = new Date(today);
-            firstPaymentDate.setMonth(firstPaymentDate.getMonth() + 1);
-            firstPaymentDate.setDate(15); // Set to 15th of next month
-            
-            // Due date is numMonths after first payment (last payment date)
-            const dueDate = new Date(firstPaymentDate);
-            dueDate.setMonth(dueDate.getMonth() + numMonths - 1);
-            
-            const formatDate = (date) => {
-                const months = language === 'es' 
-                    ? ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
-                    : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
-            };
-            
-            return {
-                firstPayment: formatDate(firstPaymentDate),
-                dueDate: formatDate(dueDate)
-            };
-        }
-
-        // Format consolidation offer message
-        function formatConsolidationOffer(loans, offer, showUpsell = false) {
-            const paymentDates = calculatePaymentDates(offer.numMonths);
-            const numPayments = offer.numMonths;
-            
-            if (language === 'es') {
-                let message = `**Oferta de Consolidación**\n\n`;
-                message += `**Tus préstamos actuales:**\n`;
-                loans.forEach(loan => {
-                    const rateDisplay = loan.rateType === 'monthly' 
-                        ? `${loan.rate}% mensual` 
-                        : `${loan.rate}% semanal`;
-                    message += `• ${loan.lender}: $${loan.balance.toLocaleString()} MXN a ${rateDisplay}\n`;
-                });
-                message += `\n**Tu situación actual:**\n`;
-                message += `• **Saldo total:** $${offer.baseBalance.toLocaleString()} MXN\n`;
-                message += `• **Pago mensual actual:** $${offer.currentMonthlyPayment.toFixed(2)} MXN\n`;
-                message += `• **Interés mensual actual:** $${offer.currentMonthlyInterest.toFixed(2)} MXN\n`;
-                message += `• **Tasa promedio actual:** ${offer.weightedRate.toFixed(2)}% semanal\n`;
-                message += `\n**Tu nueva oferta de consolidación:**\n`;
-                if (offer.includeAdditional10Percent) {
-                    message += `• **Monto total del préstamo:** $${offer.totalBalance.toLocaleString()} MXN (incluye $${offer.additionalAmount.toFixed(2)} adicionales)\n`;
-                } else {
-                    message += `• **Monto total del préstamo:** $${offer.totalBalance.toLocaleString()} MXN\n`;
-                }
-                message += `• **Tasa de interés semanal:** ${offer.weeklyRate.toFixed(2)}% semanal (más baja que tu promedio actual)\n`;
-                message += `• **Monto del pago mensual:** $${offer.newMonthlyPayment.toFixed(2)} MXN\n`;
-                message += `• **Número de pagos:** ${numPayments} pagos mensuales\n`;
-                message += `• **Fecha del primer pago:** ${paymentDates.firstPayment}\n`;
-                message += `• **Fecha de vencimiento:** ${paymentDates.dueDate}\n`;
-                message += `\n**¡Tus ahorros:**\n`;
-                message += `• **Ahorro en pago mensual:** $${offer.monthlyPaymentSavings.toFixed(2)} MXN (${((offer.monthlyPaymentSavings / offer.currentMonthlyPayment) * 100).toFixed(1)}% menos)\n`;
-                message += `• **Ahorro en interés mensual:** $${offer.monthlyInterestSavings.toFixed(2)} MXN\n`;
-                message += `• **Ahorro total en intereses (${offer.numMonths} meses):** $${offer.totalInterestSavings.toFixed(2)} MXN\n`;
-                message += `• **Ahorro total en pagos (${offer.numMonths} meses):** $${offer.totalPaymentSavings.toFixed(2)} MXN\n\n`;
-                message += `En vez de estar batallando con ${loans.length} pagos diferentes ($${offer.currentMonthlyPayment.toFixed(2)}/mes), ahora tienes **UN solo pago** de $${offer.newMonthlyPayment.toFixed(2)}/mes.\n\n`;
-                
-                if (!showUpsell && !offer.includeAdditional10Percent) {
-                    message += `**Oportunidad adicional:**\n`;
-                    const additionalAmount = Math.min(offer.baseBalance * 0.1, 15000 - offer.baseBalance);
-                    message += `¿Te gustaría recibir un 10% adicional ($${additionalAmount.toFixed(2)} MXN) al mismo tipo de interés? Esto puede ayudarte a cubrir gastos inesperados y mantenerte alejado de otros prestamistas.\n\n`;
-                } else {
-                    message += `¡Estás aprobada! El préstamo de consolidación pagará tus otros préstamos directamente. Un solo pago simple de aquí en adelante.`;
-                }
-                return message;
-            } else {
-                let message = `**Consolidation Offer**\n\n`;
-                message += `**Your current loans:**\n`;
-                loans.forEach(loan => {
-                    const rateDisplay = loan.rateType === 'monthly' 
-                        ? `${loan.rate}% monthly` 
-                        : `${loan.rate}% weekly`;
-                    message += `• ${loan.lender}: $${loan.balance.toLocaleString()} MXN at ${rateDisplay}\n`;
-                });
-                message += `\n**Your current situation:**\n`;
-                message += `• **Total balance:** $${offer.baseBalance.toLocaleString()} MXN\n`;
-                message += `• **Current monthly payment:** $${offer.currentMonthlyPayment.toFixed(2)} MXN\n`;
-                message += `• **Current monthly interest:** $${offer.currentMonthlyInterest.toFixed(2)} MXN\n`;
-                message += `• **Current average rate:** ${offer.weightedRate.toFixed(2)}% weekly\n`;
-                message += `\n**Your new consolidation offer:**\n`;
-                if (offer.includeAdditional10Percent) {
-                    message += `• **Total loan amount:** $${offer.totalBalance.toLocaleString()} MXN (includes $${offer.additionalAmount.toFixed(2)} additional)\n`;
-                } else {
-                    message += `• **Total loan amount:** $${offer.totalBalance.toLocaleString()} MXN\n`;
-                }
-                message += `• **Weekly interest rate:** ${offer.weeklyRate.toFixed(2)}% weekly (lower than your current average)\n`;
-                message += `• **Monthly payment amount:** $${offer.newMonthlyPayment.toFixed(2)} MXN\n`;
-                message += `• **Number of payments:** ${numPayments} monthly payments\n`;
-                message += `• **Date of first payment:** ${paymentDates.firstPayment}\n`;
-                message += `• **Due date:** ${paymentDates.dueDate}\n`;
-                message += `\n**Your savings:**\n`;
-                message += `• **Monthly payment savings:** $${offer.monthlyPaymentSavings.toFixed(2)} MXN (${((offer.monthlyPaymentSavings / offer.currentMonthlyPayment) * 100).toFixed(1)}% less)\n`;
-                message += `• **Monthly interest savings:** $${offer.monthlyInterestSavings.toFixed(2)} MXN\n`;
-                message += `• **Total interest savings (${offer.numMonths} months):** $${offer.totalInterestSavings.toFixed(2)} MXN\n`;
-                message += `• **Total payment savings (${offer.numMonths} months):** $${offer.totalPaymentSavings.toFixed(2)} MXN\n\n`;
-                message += `Instead of juggling ${loans.length} different payments ($${offer.currentMonthlyPayment.toFixed(2)}/month), you now have **ONE payment** of $${offer.newMonthlyPayment.toFixed(2)}/month.\n\n`;
-                
-                if (!showUpsell && !offer.includeAdditional10Percent) {
-                    message += `**Additional opportunity:**\n`;
-                    const additionalAmount = Math.min(offer.baseBalance * 0.1, 15000 - offer.baseBalance);
-                    message += `Would you like an additional 10% ($${additionalAmount.toFixed(2)} MXN) at the same interest rate? This can help cover unexpected expenses and keep you from needing other lenders.\n\n`;
-                } else {
-                    message += `You're approved! The consolidation loan will pay off your other loans directly. One simple payment going forward.`;
-                }
-                return message;
-            }
-        }
-
-        // Use fallback loan if extraction fails
-        function useFallbackLoan(attemptIndex) {
-            if (attemptIndex < FALLBACK_LOANS.length) {
-                return { ...FALLBACK_LOANS[attemptIndex] };
-            }
-            return null;
-        }
-
-        // Check if customer indicates they're done sharing loans
-        function isDoneSharingLoans(text) {
-            if (!text) return false;
-            const lowerText = text.toLowerCase().trim();
-            
-            // Exact match for short responses like "no", "nope", "done"
-            const exactMatches = ['no', 'nope', 'done', 'nada', 'ya', 'listo', 'no mas', 'ya no', 'eso es todo', 'es todo', 'ya estuvo'];
-            if (exactMatches.includes(lowerText)) return true;
-            
-            // Partial match for longer phrases
-            const donePhrases = [
-                'that\'s all', 'thats all', 'that is all', 'that\'s it', 'thats it',
-                'no more', 'no more loans', 'no more to share',
-                'i\'m done', 'im done', 'i am done',
-                'that\'s everything', 'thats everything', 'that is everything',
-                'finished', 'i\'m finished', 'im finished',
-                'all done', 'all set', 'ready to see',
-                'show me the offer', 'show the offer', 'ready for offer',
-                'es todo', 'eso es todo', 'no es todo', 'ya es todo', // Spanish "that's all" variations
-                'no más', 'ya terminé', 'terminé', 'ya termine',
-                'listo para ver', 'muéstrame la oferta', 'esos son todos',
-                'no tengo más', 'ya no tengo', 'son todos', 'ya no más',
-                'nada más', 'ninguno más', 'no hay más', 'solo esos', 'solamente esos'
-            ];
-            return donePhrases.some(phrase => lowerText.includes(phrase));
-        }
-
-        // Render messages
+        // ========================================
+        // RENDER MESSAGES
+        // ========================================
         function renderMessages() {
             elements.messagesArea.innerHTML = '';
             
-            messages.forEach((msg) => {
+            messages.forEach(msg => {
                 const msgDiv = document.createElement('div');
                 msgDiv.className = `flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`;
                 
                 const contentDiv = document.createElement('div');
-                contentDiv.className = `max-w-xs ${msg.role === 'user' ? 'order-2' : ''}`;
+                contentDiv.className = 'max-w-xs';
                 
+                // Show image if present
                 if (msg.image) {
                     const imgDiv = document.createElement('div');
-            imgDiv.className = 'mb-2 rounded-xl overflow-hidden border-2 border-gray-200 bg-gray-100';
+                    imgDiv.className = 'mb-2 rounded-xl overflow-hidden border-2 border-gray-200 bg-gray-100';
                     const img = document.createElement('img');
                     img.src = msg.image;
-                    img.alt = 'Uploaded loan screenshot';
+                    img.alt = 'Uploaded image';
                     img.className = 'w-full max-w-xs object-contain';
-                    img.style.maxHeight = '400px';
+                    img.style.maxHeight = '200px';
                     imgDiv.appendChild(img);
                     contentDiv.appendChild(imgDiv);
                 }
                 
-                const textDiv = document.createElement('div');
-                textDiv.className = `px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                    msg.role === 'user' 
-                        ? 'bg-[#FF6B35] text-white rounded-br-md shadow-sm' 
-                        : 'bg-white text-gray-700 rounded-bl-md shadow-sm border border-gray-100'
-                }`;
+                // Message bubble
+                const bubble = document.createElement('div');
+                bubble.className = msg.role === 'user' 
+                    ? 'bg-[#FF6B35] text-white rounded-2xl rounded-br-md px-4 py-2.5 text-sm'
+                    : 'bg-gray-100 text-gray-800 rounded-2xl rounded-bl-md px-4 py-2.5 text-sm message-content';
                 
-                // Simple markdown rendering for assistant messages
-                if (msg.role === 'assistant') {
-                    textDiv.innerHTML = formatMessage(msg.content);
+                // Render markdown for assistant messages
+                if (msg.role === 'assistant' && typeof marked !== 'undefined') {
+                    bubble.innerHTML = marked.parse(msg.content || '');
                 } else {
-                    textDiv.textContent = msg.content;
+                    bubble.textContent = msg.content || '';
                 }
                 
-                contentDiv.appendChild(textDiv);
-                
+                contentDiv.appendChild(bubble);
                 msgDiv.appendChild(contentDiv);
                 elements.messagesArea.appendChild(msgDiv);
             });
             
+            // Show loading indicator
             if (isLoading) {
                 const loadingDiv = document.createElement('div');
                 loadingDiv.className = 'flex justify-start';
                 loadingDiv.innerHTML = `
-                    <div class="bg-white px-4 py-3 rounded-2xl rounded-bl-md shadow-sm border border-gray-100">
-                        <div class="flex gap-1">
-                            <div class="w-2 h-2 bg-[#FF6B35] rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
-                            <div class="w-2 h-2 bg-[#FF6B35] rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
-                            <div class="w-2 h-2 bg-[#FF6B35] rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
+                    <div class="bg-gray-100 rounded-2xl rounded-bl-md">
+                        <div class="typing-indicator">
+                            <span></span><span></span><span></span>
                         </div>
                     </div>
                 `;
                 elements.messagesArea.appendChild(loadingDiv);
             }
             
+            // Scroll to bottom
             elements.messagesArea.scrollTop = elements.messagesArea.scrollHeight;
         }
 
-        // Welcome messages
-        function getWelcomeMessage() {
-            const name = customerProfile.customerName;
-            if (language === 'es') {
-                return `¡Hola ${name}! 👋 Qué gusto que aceptaste esta oportunidad. Soy Andrea de Tala, y estoy aquí para ayudarte a consolidar todos tus préstamos en uno solo.
-
-En los próximos minutos, vamos a revisar tus préstamos de otras apps y te voy a mostrar cómo puedes simplificar todo en un solo pago, con una tasa más baja y menos estrés.
-
-¿Lista para empezar? Solo necesito que compartas las capturas de tus préstamos con otras apps. Puedes compartir tantos como tengas.`;
-            } else {
-                return `Hey ${name}! 👋 So glad you opted in for this opportunity. I'm Andrea from Tala, and I'm here to help you consolidate all your loans into one.
-
-Over the next few minutes, we'll review your loans from other apps and I'll show you how you can simplify everything into one payment, with a lower rate and less stress.
-
-Ready to get started? I just need you to share screenshots of your loans with other apps. You can share as many as you have.`;
+        // ========================================
+        // SEND MESSAGE - The core function
+        // ========================================
+        async function sendMessage(userText = '', imageBase64 = null) {
+            if (isLoading) return;
+            if (!userText.trim() && !imageBase64) return;
+            
+            isLoading = true;
+            
+            // Add user message to history
+            const userMessage = { role: 'user', content: userText };
+            if (imageBase64) {
+                userMessage.image = imageBase64;
             }
-        }
-
-        // Start conversation
-        async function startConversation() {
-            isLoading = true;
+            messages.push(userMessage);
             renderMessages();
-
-            // Use hardcoded welcome message
-            const welcomeMessage = getWelcomeMessage();
-
-            messages = [{ role: 'assistant', content: welcomeMessage }];
-            isLoading = false;
-            renderMessages();
-        }
-
-        // Send message with structured data extraction
-        async function sendMessage(userMessage, imageData = null) {
-            if (!userMessage.trim() && !imageData) return;
-
-            // Add user message
-            const userMsg = { 
-                role: 'user', 
-                content: userMessage || (imageData ? (language === 'es' ? 'Aquí está mi captura del préstamo' : 'Here\'s my loan screenshot') : ''),
-                image: imageData 
-            };
-            messages.push(userMsg);
-            elements.messageInput.value = '';
-            isLoading = true;
-            renderMessages();
-
-            // Build messages for backend API
-            const systemPrompt = buildSystemPrompt();
-            const apiMessages = messages.map(msg => {
-                if (msg.role === 'user' && msg.image) {
-                    // For images, use vision API format
-                    return {
-                        role: 'user',
-                        content: [
-                            {
-                                type: 'text',
-                                text: msg.content || (language === 'es' 
-                                    ? 'Estoy compartiendo una captura de un préstamo. Por favor analízala y extrae el nombre del prestamista, saldo pendiente y tasa de interés.'
-                                    : 'I\'m sharing a loan screenshot. Please analyze it and extract the lender name, outstanding balance, and interest rate.')
-                            },
-                            {
-                                type: 'image_url',
-                                image_url: {
-                                    url: msg.image
-                                }
-                            }
-                        ]
-                    };
-                }
-                return { role: msg.role, content: msg.content };
-            });
-
+            
             try {
+                // Build API messages
+                const apiMessages = messages.map(msg => {
+                    if (msg.image) {
+                        return {
+                            role: msg.role,
+                            content: [
+                                { type: 'text', text: msg.content || 'Aquí está mi evidencia' },
+                                { type: 'image_url', image_url: { url: msg.image } }
+                            ]
+                        };
+                    }
+                    return { role: msg.role, content: msg.content };
+                });
+                
+                // Call API
                 const response = await fetch(`${BACKEND_URL}/api/chat`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         provider: 'openai',
                         model: 'gpt-4o',
-                        max_tokens: 500,
-                        system: systemPrompt,
-                        messages: apiMessages,
-                        sessionId: `debt-consolidation-${Date.now()}`,
-                        userId: customerProfile.customerName
+                        max_tokens: 1000,
+                        system: SYSTEM_PROMPT,
+                        messages: apiMessages
                     })
                 });
                 
                 if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error || 'API request failed');
+                    throw new Error('API request failed');
                 }
-
-                const data = await response.json();
-                // Backend returns normalized format: { content: [{ text: "..." }] }
-                let assistantMessage = data.content?.[0]?.text || data.content || 'Error: Invalid response';
                 
-                // If this was an image upload, try to extract structured loan data
-                if (imageData) {
-                    const extractedLoan = extractLoanData(assistantMessage);
-                    console.log('Extraction result:', extractedLoan);
-                    console.log('Full assistant message:', assistantMessage);
-                    
-                    if (extractedLoan && extractedLoan.lender && extractedLoan.balance && extractedLoan.rate) {
-                        // Successfully extracted loan data
-                        extractedLoans.push(extractedLoan);
-                        loanExtractionAttempts = 0; // Reset fallback counter
-                        
-                        // Remove JSON from the displayed message (keep only the friendly text)
-                        assistantMessage = assistantMessage
-                            .replace(/\{[\s\S]*?"loan"[\s\S]*?\}/g, '')
-                            .replace(/```json\s*[\s\S]*?\s*```/g, '')
-                            .replace(/```\s*\{[\s\S]*?\}\s*```/g, '')
-                            .replace(/\{\s*\}/g, '') // Remove empty JSON objects
-                            .trim();
-                        
-                        // CRITICAL: Remove any error messages the LLM incorrectly included
-                        // Do this FIRST before anything else - find error message start and cut everything after
-                        const errorStarts = [
-                            'No pude extraer',
-                            'I couldn\'t clearly extract',
-                            'I couldn\'t extract',
-                            'Could you help me',
-                            '¿Podrías ayudarme',
-                            'Compartir otra captura',
-                            'Share another clearer'
-                        ];
-                        
-                        for (const errorStart of errorStarts) {
-                            const errorIndex = assistantMessage.indexOf(errorStart);
-                            if (errorIndex !== -1) {
-                                console.log('Found error message at index:', errorIndex, 'text:', errorStart);
-                                assistantMessage = assistantMessage.substring(0, errorIndex).trim();
-                                break; // Stop after first match
-                            }
-                        }
-                        
-                        // Clean up any trailing whitespace
-                        assistantMessage = assistantMessage.replace(/\n\n\n+/g, '\n\n').trim();
-                        
-                        // Just acknowledge the loan - don't show offer yet
-                        // The agent will ask if they have more loans, and only show offer when customer says they're done
-                messages.push({ role: 'assistant', content: assistantMessage });
-                    } else {
-                        // Extraction failed - ask customer for manual details or better photo
-                        loanExtractionAttempts++;
-                        const errorMsg = language === 'es'
-                            ? 'No pude extraer claramente los detalles del préstamo de esta imagen. ¿Podrías ayudarme de una de estas formas?\n\n1. Compartir otra captura más clara que muestre el nombre del prestamista, saldo pendiente y tasa de interés\n2. O decirme los detalles manualmente: nombre del prestamista, saldo pendiente y tasa de interés'
-                            : 'I couldn\'t clearly extract the loan details from this image. Could you help me in one of these ways?\n\n1. Share another clearer screenshot that shows the lender name, outstanding balance, and interest rate\n2. Or tell me the details manually: lender name, outstanding balance, and interest rate';
-                        
-                        // Update the assistant message to include the error message
-                        // Remove JSON (including empty ones) and code blocks
-                        assistantMessage = assistantMessage
-                            .replace(/\{[\s\S]*?"loan"[\s\S]*?\}/g, '')
-                            .replace(/```json\s*[\s\S]*?\s*```/g, '')
-                            .replace(/```\s*\{[\s\S]*?\}\s*```/g, '')
-                            .replace(/\{\s*\}/g, '') // Remove empty JSON objects
-                            .trim();
-                        if (assistantMessage) {
-                            assistantMessage += '\n\n' + errorMsg;
-                        } else {
-                            assistantMessage = errorMsg;
-                        }
-                        messages.push({ role: 'assistant', content: assistantMessage });
-                    }
-                } else {
-                    // Regular text message - check if user is providing manual loan details or indicating they're done
-                    if (userMessage) {
-                        // IMPORTANT: Check for manual loan details FIRST, before checking if they're done
-                        // This ensures we extract loan details even if the message also contains "done" phrases
-                        const manualLoan = extractLoanFromText(userMessage);
-                        if (manualLoan) {
-                            extractedLoans.push(manualLoan);
-                            // Acknowledge the loan
-                            const ackMsg = language === 'es'
-                                ? `¡Perfecto! Registré tu préstamo con ${manualLoan.lender}. Saldo: $${manualLoan.balance.toLocaleString()} MXN a ${manualLoan.rate}% ${manualLoan.rateType === 'monthly' ? 'mensual' : 'semanal'}.`
-                                : `Perfect! I recorded your loan with ${manualLoan.lender}. Balance: $${manualLoan.balance.toLocaleString()} MXN at ${manualLoan.rate}% ${manualLoan.rateType === 'monthly' ? 'monthly' : 'weekly'}.`;
-                            
-                            messages.push({ role: 'assistant', content: assistantMessage });
-                            messages.push({ role: 'assistant', content: ackMsg });
-                            
-                            // After extracting loan, check if they're also indicating they're done
-                            if (isDoneSharingLoans(userMessage) && extractedLoans.length >= 1) {
-                                // Customer is done - show consolidation offer
-                                setTimeout(() => {
-                                    const offer = calculateConsolidationOffer(extractedLoans);
-                                    if (offer) {
-                                        const offerMessage = formatConsolidationOffer(extractedLoans, offer);
-                                        messages.push({ role: 'assistant', content: offerMessage });
-                                        renderMessages();
-                                    }
-                                }, 500);
-                            }
-                        } else {
-                            // No loan details found - check if they're indicating they're done sharing loans
-                            if (isDoneSharingLoans(userMessage) && extractedLoans.length >= 1) {
-                                // Customer is done - show consolidation offer
-                                const offer = calculateConsolidationOffer(extractedLoans);
-                                if (offer) {
-                                    messages.push({ role: 'assistant', content: assistantMessage });
-                                    setTimeout(() => {
-                                        const offerMessage = formatConsolidationOffer(extractedLoans, offer);
-                                        messages.push({ role: 'assistant', content: offerMessage });
-                                        renderMessages();
-                                    }, 500);
-                                } else {
-                                    messages.push({ role: 'assistant', content: assistantMessage });
-                                }
-                            } else {
-                                // Regular text message, no extraction needed
-                                messages.push({ role: 'assistant', content: assistantMessage });
-                            }
-                        }
-                    } else {
-                        // Regular text message, no extraction needed
-                        messages.push({ role: 'assistant', content: assistantMessage });
-                    }
-                }
+                const data = await response.json();
+                const assistantContent = data.content?.[0]?.text || data.content || 'Error: Invalid response';
+                
+                // Add assistant message
+                messages.push({ role: 'assistant', content: assistantContent });
+                
             } catch (error) {
-                console.error('Error sending message:', error);
-                const errorMsg = language === 'es' 
-                    ? '¡Ups, perdón por eso! Tuve un pequeño problema. ¿Puedes intentar de nuevo?'
-                    : 'Oops, sorry about that! Had a little hiccup on my end. Mind trying again?';
-                messages.push({ role: 'assistant', content: errorMsg });
+                console.error('Error:', error);
+                messages.push({ 
+                    role: 'assistant', 
+                    content: '¡Ups! Hubo un problema. ¿Puedes intentar de nuevo?' 
+                });
             }
             
             isLoading = false;
             renderMessages();
         }
 
-        // Authentication functions
-        function checkAuthentication() {
-            const stored = sessionStorage.getItem('demo_authenticated');
-            if (stored === 'true') {
-                isAuthenticated = true;
-                document.getElementById('passwordModal').classList.add('hidden');
-                startConversation();
-            } else {
-                document.getElementById('passwordModal').classList.remove('hidden');
-            }
+        // ========================================
+        // WELCOME MESSAGE
+        // ========================================
+        function showWelcomeMessage() {
+            messages = [];
+            // Trigger initial greeting from LLM
+            sendMessage('Hola');
         }
 
-        function handleLogin(e) {
+        // ========================================
+        // EVENT HANDLERS
+        // ========================================
+        
+        // Login
+        elements.loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const username = document.getElementById('usernameInput').value.trim();
-            const password = document.getElementById('passwordInput').value;
-            const errorDiv = document.getElementById('loginError');
-
+            const username = elements.usernameInput.value.trim();
+            const password = elements.passwordInput.value;
+            
             if (username === DEMO_CREDENTIALS.username && password === DEMO_CREDENTIALS.password) {
                 isAuthenticated = true;
-                sessionStorage.setItem('demo_authenticated', 'true');
-                document.getElementById('passwordModal').classList.add('hidden');
-                startConversation();
+                elements.passwordModal.classList.add('hidden');
+                showWelcomeMessage();
             } else {
-                errorDiv.textContent = 'Invalid username or password';
-                errorDiv.classList.remove('hidden');
-                document.getElementById('passwordInput').value = '';
+                elements.loginError.textContent = 'Invalid credentials';
+                elements.loginError.classList.remove('hidden');
             }
-        }
-
-        // Event listeners
-        document.getElementById('loginForm').addEventListener('submit', handleLogin);
-
+        });
+        
+        // Send message
         elements.messageForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            sendMessage(elements.messageInput.value);
+            const text = elements.messageInput.value.trim();
+            if (text) {
+                elements.messageInput.value = '';
+                sendMessage(text);
+            }
         });
-
+        
+        // Image upload button
         elements.imageBtn.addEventListener('click', () => {
             elements.fileInput.click();
         });
-
-        elements.fileInput.addEventListener('change', (e) => {
+        
+        // File selected
+        elements.fileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const imageData = event.target.result;
-                    const defaultMsg = language === 'es' ? 'Aquí está mi captura del préstamo' : "Here's my loan screenshot";
-                    sendMessage(elements.messageInput.value || defaultMsg, imageData);
-                    elements.messageInput.value = '';
-                };
-                reader.readAsDataURL(file);
+            if (!file) return;
+            
+            // Convert to base64
+            const reader = new FileReader();
+            reader.onload = () => {
+                const base64 = reader.result;
+                sendMessage('Aquí está mi evidencia', base64);
+            };
+            reader.readAsDataURL(file);
+            
+            // Reset file input
+            elements.fileInput.value = '';
+        });
+        
+        // Reset button
+        elements.resetBtn.addEventListener('click', () => {
+            if (confirm('¿Reiniciar la conversación?')) {
+                showWelcomeMessage();
             }
         });
 
-        elements.resetBtn.addEventListener('click', () => {
-            messages = [];
-            extractedLoans = [];
-            loanExtractionAttempts = 0;
-            upsellOffered = false;
-            upsellAccepted = false;
-            startConversation();
-        });
-
-        elements.langToggle.addEventListener('click', () => {
-            language = language === 'es' ? 'en' : 'es';
-            messages = [];
-            extractedLoans = [];
-            loanExtractionAttempts = 0;
-            upsellOffered = false;
-            upsellAccepted = false;
-            updateUIText();
-            startConversation();
-        });
-
-        // API key input no longer needed
-
-        // Initialize
-        updateUIText();
-        // Conversation will start automatically if API key exists (handled above)
+        // ========================================
+        // INIT
+        // ========================================
+        renderMessages();
     </script>
 </body>
 </html>
