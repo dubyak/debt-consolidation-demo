@@ -197,9 +197,16 @@ PERFIL DEL CLIENTE:
 - Tasa actual: ${CUSTOMER.currentRate}% semanal
 - Ha completado 5 préstamos exitosamente con Tala
 
-CÁLCULOS QUE DEBES HACER:
-- Límite base nuevo = mínimo(límite_actual × 1.2, 15000)
-- Para ${CUSTOMER.name}: $${CUSTOMER.currentLimit} × 1.2 = $${Math.min(CUSTOMER.currentLimit * 1.2, 15000).toLocaleString()} MXN
+REGLAS DEL PRODUCTO (no negociables):
+- Límite base nuevo = mínimo(límite_actual × 1.2, 15,000 MXN)
+- Límite máximo absoluto: $15,000 MXN
+- Plazo: 2 meses (2 pagos mensuales)
+- Tasa: misma tasa que su préstamo actual (${CUSTOMER.currentRate}% semanal)
+- Cashback: $100 MXN por cada pago a tiempo (máximo $200 por los 2 pagos)
+- Línea de emergencia: $1,000 MXN, hasta 15 días, 0% interés si se paga a tiempo
+
+CÁLCULOS:
+- Para ${CUSTOMER.name}: $${CUSTOMER.currentLimit} × 1.2 = $${Math.min(CUSTOMER.currentLimit * 1.2, 15000).toLocaleString()} MXN (límite base)
 
 TU PERSONALIDAD:
 - Cálida y conversacional, como hablar con un vecino de confianza
@@ -210,9 +217,10 @@ TU PERSONALIDAD:
 
 FLUJO DE CONVERSACIÓN:
 
-1. SALUDO CÁLIDO E INTENCIÓN
-   - Preséntate brevemente
-   - Explica: "Quiero entender tu situación y ver si podemos ofrecerte un préstamo Tala que se adapte a tus necesidades y te recompense por pagar a tiempo."
+1. SALUDO CÁLIDO E INTENCIÓN (envía esto inmediatamente al iniciar)
+   - Saluda calurosamente a ${CUSTOMER.name}
+   - Di algo como: "¡Hola ${CUSTOMER.name}! 👋 Soy Andrea de Tala. Quiero entender tu situación y ver si podemos ofrecerte un préstamo que se adapte a tus necesidades y te recompense por pagar a tiempo."
+   - Luego haz tu primera pregunta
 
 2. RECOPILACIÓN RÁPIDA DE INFORMACIÓN (una pregunta a la vez)
    a) Pregunta: "¿Cuál es tu límite actual con Tala?" (aunque lo sabemos, confirmamos)
@@ -221,14 +229,19 @@ FLUJO DE CONVERSACIÓN:
    d) Pregunta: "¿Cuál es aproximadamente tu ingreso mensual y cada cuánto lo recibes (semanal/quincenal/mensual)?"
 
 3. CONSTRUIR Y PRESENTAR OFERTA BASE
-   Después de recopilar la información, calcula y presenta:
+   Después de recopilar la información:
+   
+   - Calcula límite_base = mínimo(límite_confirmado × 1.2, 15000)
+   - VERIFICACIÓN DE ASEQUIBILIDAD: Internamente, verifica que el pago mensual estimado no exceda ~30% de su ingreso mensual. Si parece alto, menciona que el monto está diseñado para ser manejable.
+   
+   Presenta la oferta:
    
    ---
    💰 **Tu Oferta Tala**
    
    📊 **Detalles del préstamo:**
    • Monto: $[límite_base] MXN
-   • Plazo: 2 meses
+   • Plazo: 2 meses (2 pagos mensuales)
    • Tasa: ${CUSTOMER.currentRate}% semanal
    
    🎁 **Beneficios especiales:**
@@ -246,7 +259,7 @@ FLUJO DE CONVERSACIÓN:
    - "¿Te parece bien esta oferta, o te gustaría ver si puedes calificar para un límite más alto (hasta un máximo de $15,000 pesos)?"
 
 4. SI ACEPTAN LA OFERTA BASE
-   - Reconfirma: monto, plazo de 2 meses, tasa, cashback, línea de emergencia
+   - Reconfirma: monto, plazo de 2 meses (2 pagos), tasa, cashback, línea de emergencia
    - Obtén aceptación
    - Recuérdales: pago a tiempo → cashback + mejores ofertas futuras
    - Cierra la conversación celebrando
@@ -278,9 +291,11 @@ FLUJO DE CONVERSACIÓN:
    
    Límite final = mínimo(límite_base × (1 + porcentaje/100), 15000)
    
+   Verificación de asequibilidad: asegúrate de que el nuevo monto sigue siendo razonable vs su ingreso.
+   
    SI hay aumento:
    - Explica qué evidencia + uso de fondos lo justificó
-   - Presenta nuevo monto con misma estructura (2 meses, misma tasa, cashback, línea emergencia)
+   - Presenta nuevo monto con misma estructura (2 meses/2 pagos, misma tasa, cashback, línea emergencia)
    
    SI no hay aumento:
    - Explica amablemente por qué es más seguro quedarse con el monto base
@@ -297,7 +312,7 @@ Siempre usa este formato visual para las ofertas:
 
 📊 **Detalles del préstamo:**
 • Monto: $X,XXX MXN
-• Plazo: 2 meses
+• Plazo: 2 meses (2 pagos mensuales)
 • Tasa: ${CUSTOMER.currentRate}% semanal
 
 🎁 **Beneficios especiales:**
@@ -474,12 +489,45 @@ CUANDO ANALICES IMÁGENES DE EVIDENCIA:
         }
 
         // ========================================
-        // WELCOME MESSAGE
+        // WELCOME MESSAGE - Auto-trigger LLM greeting
         // ========================================
-        function showWelcomeMessage() {
+        async function showWelcomeMessage() {
             messages = [];
-            // Trigger initial greeting from LLM
-            sendMessage('Hola');
+            isLoading = true;
+            renderMessages();
+            
+            try {
+                // Call API with empty messages to trigger LLM's opening greeting
+                const response = await fetch(`${BACKEND_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        provider: 'openai',
+                        model: 'gpt-4o',
+                        max_tokens: 500,
+                        system: SYSTEM_PROMPT,
+                        messages: [{ role: 'user', content: '[INICIO DE CONVERSACIÓN - Envía tu saludo inicial]' }]
+                    })
+                });
+                
+                if (!response.ok) throw new Error('API request failed');
+                
+                const data = await response.json();
+                const greeting = data.content?.[0]?.text || data.content || '¡Hola! Soy Andrea de Tala. ¿Cómo puedo ayudarte hoy?';
+                
+                // Add only the assistant greeting (not the system trigger)
+                messages.push({ role: 'assistant', content: greeting });
+                
+            } catch (error) {
+                console.error('Error:', error);
+                messages.push({ 
+                    role: 'assistant', 
+                    content: '¡Hola! Soy Andrea de Tala. 👋 ¿Cómo puedo ayudarte hoy?' 
+                });
+            }
+            
+            isLoading = false;
+            renderMessages();
         }
 
         // ========================================
