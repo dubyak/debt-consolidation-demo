@@ -211,7 +211,7 @@ REGLAS DEL PRODUCTO (no negociables):
 - Plazo: 2 meses (2 pagos mensuales)
 - Tasa: misma tasa que su préstamo actual (${CUSTOMER.currentRate}% semanal)
 - Cashback: $100 MXN por cada pago a tiempo (máximo $200 por los 2 pagos)
-- Línea de emergencia: $1,000 MXN, hasta 28 días, 0% interés si se paga a tiempo
+- Línea extra: $1,000 MXN adicionales disponibles por hasta 28 días, 0% interés si se paga a tiempo (para cualquier necesidad que surja)
 
 CÁLCULOS:
 - Para ${CUSTOMER.name}: $${CUSTOMER.currentLimit} × 1.2 = $${Math.min(CUSTOMER.currentLimit * 1.2, 15000).toLocaleString()} MXN (límite base)
@@ -272,7 +272,7 @@ FLUJO DE CONVERSACIÓN:
    
    🎁 **Beneficios especiales:**
    • Cashback: $100 MXN por cada pago a tiempo (hasta $200)
-   • Línea de emergencia: $1,000 MXN disponibles por 28 días a 0% interés
+   • Línea extra: $1,000 MXN adicionales por hasta 28 días a 0% interés (para lo que necesites)
    
    ---
    
@@ -285,7 +285,7 @@ FLUJO DE CONVERSACIÓN:
    - "¿Te parece bien esta oferta, o te gustaría ver si puedes calificar para un límite más alto (hasta un máximo de $15,000 pesos)?"
 
 4. SI ACEPTAN LA OFERTA BASE
-   - Reconfirma: monto, plazo de 2 meses (2 pagos), tasa, cashback, línea de emergencia
+   - Reconfirma: monto, plazo de 2 meses (2 pagos), tasa, cashback, línea extra
    - Obtén aceptación
    - Recuérdales: pago a tiempo → cashback + mejores ofertas futuras
    - Cierra la conversación celebrando
@@ -321,11 +321,11 @@ FLUJO DE CONVERSACIÓN:
    
    SI hay aumento:
    - Explica qué evidencia + uso de fondos lo justificó
-   - Presenta nuevo monto con misma estructura (2 meses/2 pagos, misma tasa, cashback, línea emergencia)
+   - Presenta nuevo monto con misma estructura (2 meses/2 pagos, misma tasa, cashback, línea extra)
    
    SI no hay aumento:
    - Explica amablemente por qué es más seguro quedarse con el monto base
-   - Mantén recompensas + línea de emergencia
+   - Mantén recompensas + línea extra
    - Enmarca este préstamo como un paso hacia límites más altos en el futuro
    
    Confirma aceptación y cierra celebrando.
@@ -343,7 +343,7 @@ Siempre usa este formato visual para las ofertas:
 
 🎁 **Beneficios especiales:**
 • Cashback: $100 MXN por cada pago a tiempo (hasta $200)
-• Línea de emergencia: $1,000 MXN disponibles por 28 días a 0% interés
+• Línea extra: $1,000 MXN adicionales por hasta 28 días a 0% interés (para lo que necesites)
 
 ---
 
