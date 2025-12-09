@@ -1,6 +1,6 @@
 # Debt Consolidation Demo
 
-This is a **separate demo** from the main business partner demo. It's a standalone debt consolidation loan advisor chatbot featuring Maya from Tala.
+This is a **separate demo** from the main business partner demo. It's a standalone debt consolidation loan advisor chatbot.
 
 ## 📁 Structure
 
